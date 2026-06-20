@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FauneDex — Côte-d'Or</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-dark: #0F6E56;
+    --green-light: #E1F5EE;
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --text-hint: #999;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --progress-bg: #e0e0e0;
+  }
+  [data-theme="dark"] {
+    --bg: #111110;
+    --surface: #1c1c1a;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.15);
+    --text: #f0ede8;
+    --text-muted: #9a9691;
+    --text-hint: #666360;
+    --progress-bg: #2a2a28;
+    --green-light: #0d2e22;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background .2s, color .2s; }
+
+  /* HEADER */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 1rem 1.5rem;
+    position: sticky; top: 0; z-index: 50;
+    transition: background .2s;
+  }
+  .header-inner { max-width: 940px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .app-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .stat-pill { background: var(--bg); border: 0.5px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 13px; color: var(--text-muted); }
+  .stat-pill b { color: var(--text); }
+  .theme-btn {
+    background: var(--bg); border: 0.5px solid var(--border-strong); border-radius: 20px;
+    padding: 4px 12px; font-size: 13px; cursor: pointer; color: var(--text-muted);
+    transition: all .15s; white-space: nowrap;
+  }
+  .theme-btn:hover { background: var(--border); }
+
+  /* PROGRESS */
+  .progress-wrap { max-width: 940px; margin: 0 auto; padding: 0.75rem 1.5rem 0; }
+  .progress-bar { height: 4px; background: var(--progress-bg); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width .4s ease; }
+
+  /* MAIN */
+  .main { max-width: 940px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+  .search-input {
+    padding: 6px 12px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text); font-size: 13px; min-width: 160px; flex: 1; max-width: 240px;
+    transition: background .2s, color .2s;
+  }
+  .search-input:focus { outline: none; border-color: var(--green); }
+  .filter-btn {
+    padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: transparent; font-size: 13px; cursor: pointer; color: var(--text-muted);
+    transition: all .15s; white-space: nowrap;
+  }
+  .filter-btn:hover { background: var(--bg); }
+  .filter-btn.active { background: #E6F1FB; border-color: #378ADD; color: #185FA5; }
+  [data-theme="dark"] .filter-btn.active { background: #0c2340; border-color: #378ADD; color: #85b7eb; }
+  .filter-btn.active-cap { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+  [data-theme="dark"] .filter-btn.active-cap { color: #5dcaa5; }
+
+  /* GRID */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+
+  /* CARD */
+  .card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius);
+    padding: 10px; cursor: pointer; transition: all .15s; position: relative; user-select: none;
+  }
+  .card:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .card.captured { border-color: var(--green); }
+  [data-theme="light"] .card.captured { background: linear-gradient(145deg, #f0fdf8 0%, #fff 70%); }
+  [data-theme="dark"] .card.captured { background: linear-gradient(145deg, #0b2018 0%, var(--surface) 70%); }
+  .card-num { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; letter-spacing: .5px; }
+  .card-img {
+    width: 100%; aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; margin-bottom: 8px; overflow: hidden; background: var(--bg);
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .card-emoji { font-size: 38px; line-height: 1; }
+  .card-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .card-type { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
+  .card-date { font-size: 10px; color: var(--green); margin-top: 4px; font-weight: 500; }
+  .cap-dot {
+    position: absolute; top: 7px; right: 7px; width: 14px; height: 14px;
+    background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  }
+  .cap-dot::after { content:''; display:block; width:5px; height:5px; background:white; border-radius:50%; }
+  .first-badge {
+    position: absolute; top: 5px; right: 25px; font-size: 13px; line-height: 1;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+  }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-size: 14px; }
+  .empty-icon { font-size: 40px; display: block; margin-bottom: 10px; }
+
+  /* MODAL */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    align-items: center; justify-content: center; z-index: 200; padding: 1rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border);
+    padding: 1.5rem; max-width: 380px; width: 100%; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,.2); transition: background .2s;
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .modal-num { font-size: 11px; color: var(--text-hint); letter-spacing: .5px; }
+  .modal-name { font-size: 20px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .modal-latin { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+  .modal-close {
+    background: none; border: 0.5px solid var(--border-strong); border-radius: 8px;
+    width: 30px; height: 30px; cursor: pointer; font-size: 18px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .modal-close:hover { background: var(--bg); }
+  .modal-img {
+    width: 100%; aspect-ratio: 16/9; border-radius: var(--radius-sm);
+    margin-bottom: 1rem; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 56px;
+    overflow: hidden;
+  }
+  .modal-img img { width: 100%; height: 100%; object-fit: cover; }
+  .edit-photo-btn {
+    position: absolute; bottom: 8px; right: 8px; width: 32px; height: 32px;
+    background: rgba(0,0,0,.55); border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 15px; cursor: pointer; transition: background .15s;
+  }
+  .edit-photo-btn:hover { background: rgba(0,0,0,.75); }
+  .type-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px;
+    font-weight: 500; margin-bottom: 10px;
+  }
+  .modal-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+  .modal-habitat { font-size: 12px; color: var(--text-hint); margin-bottom: 1rem; }
+  .modal-habitat::before { content: '📍 '; }
+  .capture-section { border-top: 0.5px solid var(--border); padding-top: 1rem; }
+  .capture-title { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
+  .capture-done { font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 10px; }
+  .photo-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .photo-label {
+    flex: 1; padding: 7px 10px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm);
+    font-size: 12px; color: var(--text-muted); cursor: pointer; text-align: center; transition: all .15s;
+  }
+  .photo-label:hover { background: var(--bg); border-color: var(--green); color: var(--green-dark); }
+  .photo-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 0.5px solid var(--border); }
+  .photo-placeholder {
+    width: 50px; height: 50px; border-radius: 8px; background: var(--bg);
+    border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .input-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .input-row input, .notes-input {
+    flex: 1; padding: 6px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong);
+    background: var(--bg); color: var(--text); font-size: 12px; font-family: inherit;
+    transition: background .2s, color .2s;
+  }
+  .notes-input { width: 100%; margin-bottom: 10px; }
+  .input-row input:focus, .notes-input:focus { outline: none; border-color: var(--green); }
+  .btn-capture {
+    width: 100%; padding: 9px; border-radius: var(--radius-sm); border: none;
+    background: var(--green); color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .btn-capture:hover { background: var(--green-dark); }
+  .btn-release {
+    width: 100%; padding: 7px; border-radius: var(--radius-sm);
+    border: 0.5px solid #E24B4A; background: transparent; color: #E24B4A;
+    font-size: 12px; cursor: pointer; margin-top: 8px; transition: all .15s;
+  }
+  .btn-release:hover { background: rgba(226,75,74,.08); }
+
+  /* TYPE badge colors — works in both light & dark */
+  .t-mammifere { background: #FAECE7; color: #993C1D; }
+  .t-oiseau { background: #E6F1FB; color: #185FA5; }
+  .t-reptile { background: #EAF3DE; color: #3B6D11; }
+  .t-amphibien { background: #E1F5EE; color: #0F6E56; }
+  [data-theme="dark"] .t-mammifere { background: #2a1008; color: #f09970; }
+  [data-theme="dark"] .t-oiseau { background: #0a1e33; color: #85b7eb; }
+  [data-theme="dark"] .t-reptile { background: #0e1f06; color: #97c459; }
+  [data-theme="dark"] .t-amphibien { background: #041f14; color: #5dcaa5; }
+
+  /* TABS */
+  .view-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+  .view-tab {
+    padding: 6px 16px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: transparent; font-size: 13px; cursor: pointer; color: var(--text-muted);
+    transition: all .15s; font-weight: 500;
+  }
+  .view-tab:hover { background: var(--bg); }
+  .view-tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* MAP */
+  .map-wrap {
+    border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    background: var(--surface);
+  }
+  #map { width: 100%; height: 480px; background: var(--bg); }
+  .map-legend {
+    display: flex; gap: 16px; padding: 10px 14px; border-top: 0.5px solid var(--border);
+    font-size: 12px; color: var(--text-muted); flex-wrap: wrap; align-items: center;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+  .legend-dot.green { background: #1D9E75; }
+  .legend-dot.yellow { background: #E8B400; }
+  .map-hint { font-size: 12px; color: var(--text-hint); margin-top: 10px; text-align: center; }
+  .map-banner {
+    background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 13px; margin-bottom: 12px; display: none; align-items: center;
+    justify-content: space-between; gap: 10px;
+  }
+  [data-theme="dark"] .map-banner { color: #5dcaa5; }
+  .map-banner.show { display: flex; }
+  .map-banner button {
+    border: none; background: var(--green); color: #fff; border-radius: 16px;
+    padding: 4px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
+  }
+  .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border-radius: 8px; }
+  .leaflet-popup-tip { background: var(--surface); }
+  .popup-pin-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .popup-pin-meta { font-size: 11px; color: var(--text-muted); }
+
+  /* DATA TOOLS (export/import) */
+  .data-tools { display: flex; gap: 8px; }
+  .data-btn {
+    padding: 5px 12px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: var(--bg); font-size: 12px; cursor: pointer; color: var(--text-muted);
+    transition: all .15s; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  }
+  .data-btn:hover { background: var(--border); }
+  #import-file-input { display: none; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 20px;
+    font-size: 13px; z-index: 999; opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .toast.show { opacity: 1; }
+
+  /* MAP FILTERS */
+  .map-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+  .map-filters select, .map-filters input[type="month"] {
+    padding: 5px 10px; border-radius: 8px; border: 0.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text); font-size: 12px;
+  }
+  .map-filters select:focus, .map-filters input[type="month"]:focus { outline: none; border-color: var(--green); }
+  .map-filter-clear {
+    font-size: 12px; color: var(--text-hint); cursor: pointer; text-decoration: underline; background:none; border:none;
+  }
+  .map-count { font-size: 12px; color: var(--text-hint); margin-left: auto; }
+
+  /* MODE ÉDITION (verrou) */
+  .lock-btn {
+    padding: 5px 10px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: var(--bg); font-size: 12px; cursor: pointer; color: var(--text-muted);
+    transition: all .15s; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  }
+  .lock-btn:hover { background: var(--border); }
+  .lock-btn.unlocked { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+  .pin-modal { max-width: 320px; text-align: center; }
+  .pin-input {
+    width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong);
+    background: var(--bg); color: var(--text); font-size: 16px; text-align: center; letter-spacing: 4px;
+    margin: 14px 0; font-family: inherit;
+  }
+  .pin-input:focus { outline: none; border-color: var(--green); }
+  .sync-status {
+    font-size: 11px; color: var(--text-hint); display: flex; align-items: center; gap: 5px;
+  }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .sync-dot.error { background: #E24B4A; }
+  .sync-dot.syncing { background: #E8B400; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .readonly-notice {
+    background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 12px; color: var(--text-hint); margin-bottom: 10px; text-align: center;
+  }
+
+  @media (max-width: 500px) {
+    .app-header { padding: 0.75rem 1rem; }
+    .header-inner { gap: 8px; }
+    .header-right { width: 100%; justify-content: space-between; gap: 6px; }
+    .data-tools { gap: 6px; }
+    .data-btn, .theme-btn { padding: 5px 8px; font-size: 12px; }
+    .stat-pill { font-size: 12px; padding: 4px 8px; }
+    .main { padding: 0.75rem 1rem 3rem; }
+    .view-tabs { gap: 6px; }
+    .view-tab { padding: 6px 10px; font-size: 12px; flex: 1; text-align: center; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+    #map { height: 380px; }
+    .map-filters { flex-direction: column; align-items: stretch; }
+    .map-filters select, .map-filters input[type="month"] { width: 100%; }
+    .map-count { margin-left: 0; text-align: right; }
+    .modal { max-width: 100%; padding: 1.25rem; }
+    .modal-name { font-size: 18px; }
+    .input-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="app-title"><span>🐾</span> FauneDex — Côte-d'Or</div>
+    <div class="header-right">
+      <div class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-status-text">Synchronisé</span></div>
+      <div class="stat-pill"><b id="count-cap">0</b> / <b id="count-tot">0</b> capturés</div>
+      <div class="data-tools">
+        <button class="data-btn" onclick="exportData()">⬇️ Exporter</button>
+        <button class="data-btn" onclick="document.getElementById('import-file-input').click()">⬆️ Importer</button>
+        <input type="file" id="import-file-input" accept="application/json" onchange="importData(this)" />
+      </div>
+      <button class="lock-btn" id="lock-btn" onclick="onLockButtonClick()">🔒 Lecture seule</button>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Mode sombre</button>
+    </div>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+</div>
+
+<main class="main">
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="grid">📋 Collection</button>
+    <button class="view-tab" data-view="map">🗺️ Carte des observations</button>
+  </div>
+
+  <div class="view active" id="view-grid">
+    <div class="filters">
+      <input class="search-input" type="text" id="search" placeholder="🔍 Rechercher..." />
+      <button class="filter-btn active" data-f="all">Tous</button>
+      <button class="filter-btn" data-f="Mammifère">Mammifères</button>
+      <button class="filter-btn" data-f="Oiseau">Oiseaux</button>
+      <button class="filter-btn" data-f="Reptile">Reptiles</button>
+      <button class="filter-btn" data-f="Amphibien">Amphibiens</button>
+      <button class="filter-btn" data-f="captured">✓ Capturés</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="view" id="view-map">
+    <div class="map-banner" id="map-banner">
+      <span id="map-banner-text"></span>
+      <button onclick="cancelPlacing()">Annuler</button>
+    </div>
+    <div class="map-filters">
+      <select id="map-filter-type" aria-label="Filtrer par groupe">
+        <option value="all">Tous les groupes</option>
+        <option value="Mammifère">Mammifères</option>
+        <option value="Oiseau">Oiseaux</option>
+        <option value="Reptile">Reptiles</option>
+        <option value="Amphibien">Amphibiens</option>
+      </select>
+      <select id="map-filter-species" aria-label="Filtrer par espèce">
+        <option value="all">Toutes les espèces</option>
+      </select>
+      <select id="map-filter-kind" aria-label="Filtrer par type de point">
+        <option value="all">Capture + Observation</option>
+        <option value="capture">Capture seulement</option>
+        <option value="observation">Observation seulement</option>
+      </select>
+      <input type="month" id="map-filter-month" aria-label="Filtrer par mois" />
+      <button class="map-filter-clear" onclick="clearMapFilters()">Réinitialiser</button>
+      <span class="map-count" id="map-count"></span>
+    </div>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-legend">
+        <span><span class="legend-dot green"></span>Capture (1ère observation)</span>
+        <span><span class="legend-dot yellow"></span>Observation (revue)</span>
+      </div>
+    </div>
+    <div class="map-hint">Pour ajouter un point : ouvre une fiche animal et clique sur « 📍 Placer sur la carte ».</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-box" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* ───────────────────────── SUPABASE ─────────────────────────
+   FauneDex est maintenant connecté à une base partagée : tout le monde
+   avec le lien peut consulter les captures et observations. Seule la
+   personne qui connaît le code secret peut ajouter/modifier des données
+   (via le bouton "Lecture seule" / "Mode édition" dans le header). */
+const SUPABASE_URL = "https://yyjcfsfrglyrlcfuzkij.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5amNmc2ZyZ2x5cmxjZnV6a2lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NDUwMTYsImV4cCI6MjA5NzUyMTAxNn0.KT_VrTfkSfMdt2O_i1n_a8pAkCBq3pQKeVaE63qUH2M";
+let supabaseClient = null;
+try {
+  if(typeof supabase !== 'undefined'){
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch(e){ console.error('Supabase init failed:', e); }
+
+// Empreintes du code secret (jamais stocké en clair). Deux formats car le hash
+// dépend de la disponibilité de crypto.subtle (HTTPS) — voir sha256Hex ci-dessous.
+const EDIT_CODE_HASH = "08c159cb811c2742199fed6b07c10860a7b8e777515377e20fe0f2d90f230657";
+const EDIT_CODE_HASH_FALLBACK = "fallback_dc82f75f";
+let editModeUnlocked = false;
+
+async function sha256Hex(message){
+  if(window.crypto && window.crypto.subtle){
+    const enc = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
+    return [...new Uint8Array(hashBuffer)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  // Fallback simple (FNV-like) si crypto.subtle est indisponible (contexte non sécurisé / vieux navigateur).
+  // Moins robuste cryptographiquement, mais suffisant pour ce niveau de protection et évite un plantage.
+  let hash = 2166136261;
+  for(let i = 0; i < message.length; i++){
+    hash ^= message.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return 'fallback_' + (hash >>> 0).toString(16);
+}
+
+function setSyncStatus(state, text){
+  const dot = document.querySelector('#sync-status .sync-dot');
+  const label = document.getElementById('sync-status-text');
+  if(!dot || !label) return;
+  dot.classList.remove('error','syncing');
+  if(state === 'error') dot.classList.add('error');
+  if(state === 'syncing') dot.classList.add('syncing');
+  label.textContent = text;
+}
+
+const VILLAGE_COORDS = [47.4639, 4.4603]; // Marigny-le-Cahouët
+
+const ANIMALS = [
+  // ── MAMMIFÈRES ──────────────────────────────────────────────────────────────
+  {id:1,name:"Chevreuil",latin:"Capreolus capreolus",type:"Mammifère",emoji:"🦌",desc:"Le plus petit cervidé d'Europe. Très commun dans les forêts et lisières bourguignonnes. Actif à l'aube et au crépuscule.",habitat:"Forêts, prairies, bocages"},
+  {id:2,name:"Cerf élaphe",latin:"Cervus elaphus",type:"Mammifère",emoji:"🦌",desc:"Grand cervidé imposant, le mâle peut peser plus de 200 kg. Le brame en automne est spectaculaire.",habitat:"Grandes forêts, clairières"},
+  {id:3,name:"Biche",latin:"Cervus elaphus ♀",type:"Mammifère",emoji:"🦌",desc:"La femelle du cerf élaphe, sans bois. Vit en hardes avec ses faons. Observable à l'aube en lisière de forêt.",habitat:"Grandes forêts, clairières, prairies"},
+  {id:4,name:"Faon",latin:"Cervus elaphus (jeune)",type:"Mammifère",emoji:"🦌",desc:"Jeune cerf ou chevreuil, reconnaissable à sa robe tachetée qui disparaît en quelques mois. Discret, souvent seul le jour.",habitat:"Forêts, lisières herbeuses"},
+  {id:5,name:"Daim",latin:"Dama dama",type:"Mammifère",emoji:"🦌",desc:"Cervidé introduit, robe tachetée et bois en palette chez le mâle adulte. Présent dans certains massifs forestiers et parcs de Côte-d'Or.",habitat:"Forêts mixtes, grands massifs, parcs"},
+  {id:6,name:"Sanglier",latin:"Sus scrofa",type:"Mammifère",emoji:"🐗",desc:"Très présent en Côte-d'Or. Retourne la terre à la recherche de racines et d'invertébrés. Vit en hardes.",habitat:"Forêts, champs, zones humides"},
+  {id:7,name:"Renard roux",latin:"Vulpes vulpes",type:"Mammifère",emoji:"🦊",desc:"Opportuniste et adaptable, visible au crépuscule partout. Son terrier se reconnaît à l'odeur musquée.",habitat:"Forêts, bocages, lisières, villages"},
+  {id:8,name:"Blaireau européen",latin:"Meles meles",type:"Mammifère",emoji:"🦡",desc:"Nocturne vivant en terriers collectifs appelés blairières. Reconnaissable à sa tête rayée noir et blanc.",habitat:"Forêts et bocages"},
+  {id:9,name:"Lièvre d'Europe",latin:"Lepus europaeus",type:"Mammifère",emoji:"🐇",desc:"Ne vit pas en terrier. Ses courses folles au printemps sont caractéristiques. Vitesse de pointe : 80 km/h.",habitat:"Plaines, grandes cultures, prairies"},
+  {id:10,name:"Lapin de garenne",latin:"Oryctolagus cuniculus",type:"Mammifère",emoji:"🐰",desc:"Vit en colonies dans des terriers. Très grégaire, souvent dans les talus et coteaux ensoleillés.",habitat:"Coteaux, lisières, bocages"},
+  {id:11,name:"Hérisson d'Europe",latin:"Erinaceus europaeus",type:"Mammifère",emoji:"🦔",desc:"Insectivore nocturne reconnaissable à ses 5000 piquants. Hiverne de novembre à mars dans un nid de feuilles.",habitat:"Jardins, haies, lisières, parcs"},
+  {id:12,name:"Écureuil roux",latin:"Sciurus vulgaris",type:"Mammifère",emoji:"🐿️",desc:"Acrobate des branches, actif toute l'année. Stocke des provisions de glands et les retrouve à l'odorat.",habitat:"Forêts de feuillus et mixtes, parcs"},
+  {id:13,name:"Lérot",latin:"Eliomys quercinus",type:"Mammifère",emoji:"🐭",desc:"Petit rongeur nocturne au masque facial noir et longue queue à pinceau. Grimpe dans les arbres, vergers et greniers.",habitat:"Vergers, haies, jardins, vieux murs"},
+  {id:14,name:"Loir gris",latin:"Glis glis",type:"Mammifère",emoji:"🐭",desc:"Ressemble à un petit écureuil gris. Très vocal la nuit, hiberne longtemps. Friand des greniers et nichoirs.",habitat:"Forêts de feuillus, vergers, jardins boisés"},
+  {id:15,name:"Belette d'Europe",latin:"Mustela nivalis",type:"Mammifère",emoji:"🐭",desc:"Le plus petit carnivore d'Europe. Fulgurante, elle chasse les campagnols jusque dans leurs propres galeries.",habitat:"Prairies, bocages, forêts, talus"},
+  {id:16,name:"Campagnol des champs",latin:"Microtus arvalis",type:"Mammifère",emoji:"🐭",desc:"Rongeur très commun et proie principale de nombreux rapaces. Population cyclique avec des pics tous les 3-4 ans.",habitat:"Prairies, cultures, talus"},
+  {id:17,name:"Rat musqué",latin:"Ondatra zibethicus",type:"Mammifère",emoji:"🐭",desc:"Rongeur semi-aquatique d'origine nord-américaine, désormais très commun sur les cours d'eau et canaux.",habitat:"Rivières, étangs, fossés, canaux"},
+  {id:18,name:"Musaraigne carrelet",latin:"Sorex araneus",type:"Mammifère",emoji:"🐭",desc:"Minuscule insectivore au museau pointu. Mange l'équivalent de son poids chaque jour. Cœur à 1000 battements/min.",habitat:"Prairies, haies, forêts, jardins"},
+  {id:19,name:"Taupe commune",latin:"Talpa europaea",type:"Mammifère",emoji:"🐭",desc:"Creuse des galeries invisibles, trahie par ses taupinières. Pratiquement aveugle, mange des vers de terre.",habitat:"Prairies, jardins, forêts, vignes"},
+  {id:20,name:"Castor d'Europe",latin:"Castor fiber",type:"Mammifère",emoji:"🦫",desc:"Réintroduit avec succès. Présent sur certains cours d'eau de Côte-d'Or. Ses barrages modèlent le paysage.",habitat:"Rivières, zones humides boisées"},
+  {id:21,name:"Ragondin",latin:"Myocastor coypus",type:"Mammifère",emoji:"🦫",desc:"Grand rongeur sud-américain envahissant, incisives orange caractéristiques. Creuse les berges.",habitat:"Rivières, étangs, zones humides"},
+  {id:22,name:"Fouine",latin:"Martes foina",type:"Mammifère",emoji:"🦦",desc:"Mustelide nocturne souvent signalé dans les greniers. Tache blanche sur la gorge. Craint les câbles de voiture.",habitat:"Zones boisées, villages, fermes, jardins"},
+  {id:23,name:"Martre des pins",latin:"Martes martes",type:"Mammifère",emoji:"🦦",desc:"Plus sauvage que la fouine, avec une tache gorge jaune-orangée. Excellente grimpeuse.",habitat:"Grandes forêts"},
+  {id:24,name:"Loutre d'Europe",latin:"Lutra lutra",type:"Mammifère",emoji:"🦦",desc:"De retour sur certains cours d'eau bourguignons. Très discrète, laisse des épreintes caractéristiques sur les berges.",habitat:"Rivières propres, étangs, canaux"},
+  {id:25,name:"Putois d'Europe",latin:"Mustela putorius",type:"Mammifère",emoji:"🦦",desc:"Reconnaissable à son masque facial bicolore. Nocturne et discret, dégage un fumet musqué défensif.",habitat:"Berges, bocages, fermes"},
+  {id:26,name:"Pipistrelle commune",latin:"Pipistrellus pipistrellus",type:"Mammifère",emoji:"🦇",desc:"La plus petite et commune des chauves-souris françaises (3-8g). Visible dès le crépuscule.",habitat:"Villes, villages, forêts, jardins"},
+  {id:27,name:"Grand Murin",latin:"Myotis myotis",type:"Mammifère",emoji:"🦇",desc:"Une des plus grandes chauves-souris d'Europe (envergure 40 cm). Chasse en rase-mottes dans les sous-bois.",habitat:"Caves, greniers, forêts"},
+  {id:28,name:"Grand Rhinolophe",latin:"Rhinolophus ferrumequinum",type:"Mammifère",emoji:"🦇",desc:"Grande chauve-souris protégée, se suspend entièrement dans ses ailes pour hiberner. En déclin.",habitat:"Caves, mines, bâtiments anciens"},
+  {id:29,name:"Petit Rhinolophe",latin:"Rhinolophus hipposideros",type:"Mammifère",emoji:"🦇",desc:"Le plus petit des rhinolophes européens, devenu très rare. Émet ses ultrasons par le nez.",habitat:"Caves, grottes, bâtiments anciens"},
+  // ── OISEAUX ─────────────────────────────────────────────────────────────────
+  {id:30,name:"Merle noir",latin:"Turdus merula",type:"Oiseau",emoji:"🐦",desc:"Un des oiseaux les plus communs des jardins. Mâle entièrement noir au bec orange, femelle brune. Chant flûté mélodieux.",habitat:"Jardins, parcs, lisières, haies"},
+  {id:31,name:"Rouge-gorge familier",latin:"Erithacus rubecula",type:"Oiseau",emoji:"🐦",desc:"Petit passereau à la poitrine orange vif, très peu farouche. Chante presque toute l'année, même en hiver.",habitat:"Jardins, haies, sous-bois, parcs"},
+  {id:32,name:"Mésange charbonnière",latin:"Parus major",type:"Oiseau",emoji:"🐦",desc:"La plus grande mésange commune, calotte noire et joues blanches. Très présente aux mangeoires en hiver.",habitat:"Jardins, parcs, forêts, haies"},
+  {id:33,name:"Mésange bleue",latin:"Cyanistes caeruleus",type:"Oiseau",emoji:"🐦",desc:"Petite mésange à calotte bleue vive. Acrobatique, friande des boules de graisse en hiver.",habitat:"Jardins, parcs, forêts de feuillus"},
+  {id:34,name:"Rougequeue noir",latin:"Phoenicurus ochruros",type:"Oiseau",emoji:"🐦",desc:"Queue rousse vibrante caractéristique. Niche volontiers près des habitations et bâtiments en pierre.",habitat:"Villages, fermes, carrières, falaises"},
+  {id:35,name:"Rougequeue à front blanc",latin:"Phoenicurus phoenicurus",type:"Oiseau",emoji:"🐦",desc:"Plus forestier que son cousin noir. Front blanc net chez le mâle. Migrateur, présent de printemps à été.",habitat:"Vergers, lisières, vieux arbres à cavités"},
+  {id:36,name:"Troglodyte mignon",latin:"Troglodytes troglodytes",type:"Oiseau",emoji:"🐦",desc:"Minuscule passereau brun à queue dressée. Chant puissant et trillé surprenant pour sa taille.",habitat:"Sous-bois, haies, jardins broussailleux"},
+  {id:37,name:"Étourneau sansonnet",latin:"Sturnus vulgaris",type:"Oiseau",emoji:"🐦",desc:"Plumage noir irisé, imite de nombreux sons. Forme de spectaculaires nuées (murmurations) à l'automne.",habitat:"Villages, plaines agricoles, villes"},
+  {id:38,name:"Pinson des arbres",latin:"Fringilla coelebs",type:"Oiseau",emoji:"🐦",desc:"Passereau très commun, mâle aux joues roses et calotte bleu-gris. Chant en cascade descendante typique.",habitat:"Forêts, jardins, parcs, haies"},
+  {id:39,name:"Chardonneret élégant",latin:"Carduelis carduelis",type:"Oiseau",emoji:"🐦",desc:"Visage rouge, blanc et noir très reconnaissable, ailes jaune vif en vol. Affectionne les graines de chardon.",habitat:"Jardins, vergers, friches, lisières"},
+  {id:40,name:"Bergeronnette grise",latin:"Motacilla alba",type:"Oiseau",emoji:"🐦",desc:"Plumage gris, noir et blanc, hoche sans cesse la queue. Très commune près des habitations et points d'eau.",habitat:"Cours d'eau, fermes, parkings, toitures"},
+  {id:41,name:"Fauvette à tête noire",latin:"Sylvia atricapilla",type:"Oiseau",emoji:"🐦",desc:"Calotte noire chez le mâle, brune chez la femelle. Chant riche et fluide, très commune en lisière.",habitat:"Haies, sous-bois, jardins touffus"},
+  {id:42,name:"Fauvette grisette",latin:"Sylvia communis",type:"Oiseau",emoji:"🐦",desc:"Passereau des friches et haies basses, gorge blanche nette. Chant grinçant émis depuis un perchoir bien visible.",habitat:"Friches, haies, bocages buissonnants"},
+  {id:43,name:"Grive musicienne",latin:"Turdus philomelos",type:"Oiseau",emoji:"🐦",desc:"Poitrine tachetée, répète chaque phrase de son chant 2 à 3 fois. Très commune dans les jardins et bois.",habitat:"Jardins, forêts, haies"},
+  {id:44,name:"Tourterelle des bois",latin:"Streptopelia turtur",type:"Oiseau",emoji:"🐦",desc:"Migratrice estivale, plus discrète que la turque. Roucoulement doux et reconnaissable. En déclin en France.",habitat:"Bocages, lisières, haies"},
+  {id:45,name:"Tourterelle turque",latin:"Streptopelia decaocto",type:"Oiseau",emoji:"🐦",desc:"Collier noir caractéristique sur la nuque. Très présente en ville et village, sédentaire toute l'année.",habitat:"Villages, jardins, parcs"},
+  {id:46,name:"Pigeon ramier",latin:"Columba palumbus",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pigeon sauvage de France, tache blanche au cou. Roucoulement grave en 5 syllabes.",habitat:"Forêts, parcs, plaines agricoles"},
+  {id:47,name:"Choucas des tours",latin:"Corvus monedula",type:"Oiseau",emoji:"🐦",desc:"Petit corvidé gris et noir aux yeux clairs. Niche en colonies dans les clochers, falaises et vieux arbres creux.",habitat:"Villages, clochers, falaises, vieux arbres"},
+  {id:48,name:"Coucou gris",latin:"Cuculus canorus",type:"Oiseau",emoji:"🐦",desc:"Chant à deux notes universellement connu. Pond ses œufs dans les nids d'autres passereaux. Migrateur d'été.",habitat:"Bocages, lisières, roselières"},
+  {id:49,name:"Pic épeiche",latin:"Dendrocopos major",type:"Oiseau",emoji:"🐦",desc:"Le pic le plus visible, reconnaissable à ses couleurs noir-blanc-rouge et son tambourinage sonore.",habitat:"Forêts, parcs, jardins arborés"},
+  {id:50,name:"Pic noir",latin:"Dryocopus martius",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pic d'Europe, entièrement noir avec calotte rouge vif. Cri rauque inconfondable.",habitat:"Grandes forêts de feuillus"},
+  {id:51,name:"Pic vert",latin:"Picus viridis",type:"Oiseau",emoji:"🐦",desc:"Son rire sonore ('le yaffle') annonce la pluie selon la croyance. Cherche les fourmis au sol.",habitat:"Lisières, vergers, bocages, parcs"},
+  {id:52,name:"Pic mar",latin:"Dendrocoptes medius",type:"Oiseau",emoji:"🐦",desc:"Plus petit que l'épeiche, calotte rouge entière. Inféodé aux vieilles chênaies de Côte-d'Or.",habitat:"Vieilles forêts de chênes"},
+  {id:53,name:"Martin-pêcheur",latin:"Alcedo atthis",type:"Oiseau",emoji:"🐦",desc:"Joyau turquoise et orange des berges. Vol rapide au ras de l'eau, plongeon vertical pour capturer un poisson. Espèce protégée.",habitat:"Ruisseaux, rivières, étangs"},
+  {id:54,name:"Vanneau huppé",latin:"Vanellus vanellus",type:"Oiseau",emoji:"🐦",desc:"Cri plaintif et vol papillonnant noir-et-blanc caractéristiques. Niche dans les prairies humides.",habitat:"Prairies, labours, zones humides"},
+  {id:55,name:"Bécasse des bois",latin:"Scolopax rusticola",type:"Oiseau",emoji:"🐦",desc:"Maître du camouflage. La croule (parade) en lisière au crépuscule printanier est magique.",habitat:"Forêts humides, sous-bois"},
+  {id:56,name:"Cincle plongeur",latin:"Cinclus cinclus",type:"Oiseau",emoji:"🐦",desc:"Seul passereau capable de marcher sous l'eau contre le courant. Boule brune-blanche des torrents propres.",habitat:"Cours d'eau rapides et propres"},
+  {id:57,name:"Bergeronnette des ruisseaux",latin:"Motacilla cinerea",type:"Oiseau",emoji:"🐦",desc:"Hoche sans cesse la queue au bord des cours d'eau. Ventre jaune vif.",habitat:"Ruisseaux, rivières, moulins"},
+  {id:58,name:"Geai des chênes",latin:"Garrulus glandarius",type:"Oiseau",emoji:"🐦",desc:"Planteur de chênes : stocke et 'oublie' des milliers de glands. Son cri d'alarme perçant avertit toute la forêt.",habitat:"Forêts de chênes"},
+  {id:59,name:"Grand corbeau",latin:"Corvus corax",type:"Oiseau",emoji:"🐦",desc:"Plus grand corvide (65 cm). Croassement grave et queue en losange le distinguent de la corneille.",habitat:"Forêts, falaises, zones rurales"},
+  {id:60,name:"Corneille noire",latin:"Corvus corone",type:"Oiseau",emoji:"🐦",desc:"Corvide intelligent et opportuniste, présent partout. Sait utiliser les voitures pour casser des noix.",habitat:"Campagnes, villes, forêts"},
+  {id:61,name:"Pie bavarde",latin:"Pica pica",type:"Oiseau",emoji:"🐦",desc:"Queue longue, plumage noir et blanc irisé. Nid fermé en dôme. Très curieuse et intelligente.",habitat:"Bocages, jardins, lisières, villes"},
+  {id:62,name:"Huppe fasciée",latin:"Upupa epops",type:"Oiseau",emoji:"🐦",desc:"Crête déployable orange et noir spectaculaire. Cri trisyllabique 'houp-houp-houp'. Migratrice printanière.",habitat:"Prairies, vergers, bocages"},
+  {id:63,name:"Rollier d'Europe",latin:"Coracias garrulus",type:"Oiseau",emoji:"🐦",desc:"Oiseau aux couleurs tropicales (bleu turquoise et roux), nicheur rare et en déclin. Spectaculaire en vol.",habitat:"Coteaux boisés, vergers, bocages"},
+  {id:64,name:"Loriot d'Europe",latin:"Oriolus oriolus",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à ailes noires. Chant flûté tropical. Très discret malgré sa couleur.",habitat:"Forêts de feuillus, ripisylves"},
+  {id:65,name:"Faisan de Colchide",latin:"Phasianus colchicus",type:"Oiseau",emoji:"🐦",desc:"Gibier très chassé en Côte-d'Or. Mâle au plumage irisé spectaculaire. Présent en lisière de forêts et bosquets.",habitat:"Lisières, bocages, fourrés, cultures"},
+  {id:66,name:"Râle d'eau",latin:"Rallus aquaticus",type:"Oiseau",emoji:"🐦",desc:"Très discret dans les roselières, plus souvent entendu (cri strident) que vu.",habitat:"Roselières, marais, berges herbeuses"},
+  {id:67,name:"Grand Cormoran",latin:"Phalacrocorax carbo",type:"Oiseau",emoji:"🐦",desc:"Plonge pour capturer des poissons. Étend les ailes pour les sécher faute de glande uropygienne.",habitat:"Lacs, rivières, plans d'eau"},
+  {id:68,name:"Rémiz penduline",latin:"Remiz pendulinus",type:"Oiseau",emoji:"🐦",desc:"Passereau au masque noir, construit un nid remarquable en forme de poire suspendu à une branche.",habitat:"Roselières, ripisylves, berges boisées"},
+  {id:69,name:"Hirondelle rustique",latin:"Hirundo rustica",type:"Oiseau",emoji:"🐦",desc:"Queue fourchue, gorge rouge. Arrive en avril d'Afrique sub-saharienne, niche dans les granges.",habitat:"Zones rurales, villages, fermes"},
+  {id:70,name:"Martinet noir",latin:"Apus apus",type:"Oiseau",emoji:"🐦",desc:"Passe sa vie en vol sauf pour nicher. Cris stridents en groupe dans les villages en été. Dort en volant.",habitat:"Villes, villages (nicheur)"},
+  {id:71,name:"Tarier pâtre",latin:"Saxicola rubicola",type:"Oiseau",emoji:"🐦",desc:"Petit passereau des friches, mâle à tête noire et poitrine orangée. Se perche bien en vue sur les buissons bas.",habitat:"Friches, prairies, talus broussailleux"},
+  {id:72,name:"Bruant jaune",latin:"Emberiza citrinella",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à dos strié de brun. Chant souvent décrit comme 'un peu de pain et pas de fromage'.",habitat:"Bocages, haies, lisières de cultures"},
+  {id:73,name:"Grand Héron cendré",latin:"Ardea cinerea",type:"Oiseau",emoji:"🦢",desc:"Pêcheur immobile au bord des eaux. Grande silhouette grise inconfondable, cou replié en vol.",habitat:"Étangs, rivières, zones humides"},
+  {id:74,name:"Grue cendrée",latin:"Grus grus",type:"Oiseau",emoji:"🦢",desc:"Migration spectaculaire en V, des dizaines de milliers traversent la Bourgogne en octobre-novembre.",habitat:"Plaines, prairies (migration)"},
+  {id:75,name:"Cigogne blanche",latin:"Ciconia ciconia",type:"Oiseau",emoji:"🕊️",desc:"Migratrice visible au printemps et en automne. Niche occasionnellement en Bourgogne.",habitat:"Prairies humides, étangs, grandes plaines"},
+  {id:76,name:"Cigogne noire",latin:"Ciconia nigra",type:"Oiseau",emoji:"🕊️",desc:"Plus discrète que la blanche, elle niche dans les grandes forêts proches des rivières.",habitat:"Grandes forêts, vallées boisées"},
+  {id:77,name:"Milan royal",latin:"Milvus milvus",type:"Oiseau",emoji:"🦅",desc:"Rapace à longue queue fourchue rousse. La Bourgogne est un site majeur d'hivernage en France.",habitat:"Bocages, vallées, lisières"},
+  {id:78,name:"Milan noir",latin:"Milvus migrans",type:"Oiseau",emoji:"🦅",desc:"Rapace migrateur d'avril à août, queue peu fourchue. Souvent au-dessus des plans d'eau.",habitat:"Rivières, lacs, zones humides"},
+  {id:79,name:"Buse variable",latin:"Buteo buteo",type:"Oiseau",emoji:"🦅",desc:"Le rapace le plus commun de France. Souvent posé sur les poteaux en bord de route.",habitat:"Lisières, bocages, plaines"},
+  {id:80,name:"Circaète Jean-le-Blanc",latin:"Circaetus gallicus",type:"Oiseau",emoji:"🦅",desc:"Spécialiste des serpents. Grand planeur à tête ronde et yeux jaunes rappelant une chouette.",habitat:"Coteaux, landes, forêts claires"},
+  {id:81,name:"Faucon pèlerin",latin:"Falco peregrinus",type:"Oiseau",emoji:"🦅",desc:"Le plus rapide du règne animal en piqué (>300 km/h). Niche sur des clochers et falaises.",habitat:"Falaises, clochers, villes"},
+  {id:82,name:"Faucon crécerelle",latin:"Falco tinnunculus",type:"Oiseau",emoji:"🦅",desc:"Reconnaissable à son vol stationnaire (le 'Saint-Esprit'). Très commun en plaine.",habitat:"Campagnes, lisières, villages"},
+  {id:83,name:"Épervier d'Europe",latin:"Accipiter nisus",type:"Oiseau",emoji:"🦅",desc:"Prédateur furtif des oiseaux en vol, surgit à toute vitesse des haies.",habitat:"Forêts, bocages, jardins"},
+  {id:84,name:"Autour des palombes",latin:"Accipiter gentilis",type:"Oiseau",emoji:"🦅",desc:"Grand rapace forestier chassant en forêt dense. Discret, son passage fulgurant entre les troncs est impressionnant.",habitat:"Grandes forêts"},
+  {id:85,name:"Busard Saint-Martin",latin:"Circus cyaneus",type:"Oiseau",emoji:"🦅",desc:"Chasse en volant bas sur les plaines. Mâle gris perle, femelle brune avec croupion blanc.",habitat:"Plaines céréalières, prairies"},
+  {id:86,name:"Busard des roseaux",latin:"Circus aeruginosus",type:"Oiseau",emoji:"🦅",desc:"Rapace des zones humides. Le mâle a des ailes tricolores spectaculaires. Niche dans les roselières.",habitat:"Roselières, étangs, marais"},
+  {id:87,name:"Hibou grand-duc",latin:"Bubo bubo",type:"Oiseau",emoji:"🦉",desc:"Le plus grand rapace nocturne d'Europe (1,8 m d'envergure). Présent dans les zones rocheuses de Côte-d'Or.",habitat:"Falaises, grandes forêts, carrières"},
+  {id:88,name:"Chouette hulotte",latin:"Strix aluco",type:"Oiseau",emoji:"🦉",desc:"La chouette la plus commune. Son ululement résonne dans les nuits forestières. Chasse les campagnols.",habitat:"Forêts de feuillus, parcs, jardins"},
+  {id:89,name:"Chouette effraie",latin:"Tyto alba",type:"Oiseau",emoji:"🦉",desc:"Visage en cœur blanc caractéristique. Niche dans les clochers et granges. Cri strident la nuit.",habitat:"Clochers, granges, ruines, bocages"},
+  {id:90,name:"Hibou moyen-duc",latin:"Asio otus",type:"Oiseau",emoji:"🦉",desc:"Oreilles touffues bien visibles. Nocturne, se colle contre un tronc le jour pour disparaître.",habitat:"Bocages, forêts de conifères, parcs"},
+  {id:91,name:"Grèbe huppé",latin:"Podiceps cristatus",type:"Oiseau",emoji:"🦆",desc:"Sa parade nuptiale face-à-face avec bouquets de plumes est spectaculaire. Excellent plongeur.",habitat:"Étangs, lacs, grands plans d'eau"},
+  {id:92,name:"Harle bièvre",latin:"Mergus merganser",type:"Oiseau",emoji:"🦆",desc:"Grand canard plongeur au bec dentelé pour saisir les poissons. Présent l'hiver sur les rivières.",habitat:"Rivières, lacs, grands plans d'eau"},
+  {id:93,name:"Canard pilet",latin:"Anas acuta",type:"Oiseau",emoji:"🦆",desc:"Gracieux canard à long cou, les plumes caudales du mâle forment une élégante pointe. Migrateur.",habitat:"Étangs, rivières, plaines inondables"},
+  // ── REPTILES ────────────────────────────────────────────────────────────────
+  {id:94,name:"Lézard vert occidental",latin:"Lacerta bilineata",type:"Reptile",emoji:"🦎",desc:"Mâle d'un vert éclatant, gorge bleue en saison nuptiale. La femelle est plus terne avec des raies claires.",habitat:"Coteaux, haies, talus ensoleillés, vignes"},
+  {id:95,name:"Lézard des murailles",latin:"Podarcis muralis",type:"Reptile",emoji:"🦎",desc:"Commun sur les murs de pierre, rochers et voies ferrées. Excellent grimpeur et héliophile.",habitat:"Murs, rochers, voies ferrées, coteaux"},
+  {id:96,name:"Lézard agile",latin:"Lacerta agilis",type:"Reptile",emoji:"🦎",desc:"Moins commun. Mâle vert vif sur les flancs au printemps. Milieux secs et chauds.",habitat:"Coteaux secs, landes, talus ensoleillés"},
+  {id:97,name:"Orvet fragile",latin:"Anguis fragilis",type:"Reptile",emoji:"🐍",desc:"Lézard sans pattes souvent confondu avec un serpent. Autotomie de la queue possible. Mange des limaces.",habitat:"Jardins, compost, prairies, lisières"},
+  {id:98,name:"Couleuvre helvétique",latin:"Natrix helvetica",type:"Reptile",emoji:"🐍",desc:"Anciennement classée avec la couleuvre à collier. Semi-aquatique, collier clair caractéristique. Inoffensive, joue le mort.",habitat:"Zones humides, jardins, ruisseaux"},
+  {id:99,name:"Couleuvre verte et jaune",latin:"Hierophis viridiflavus",type:"Reptile",emoji:"🐍",desc:"Grand serpent (jusqu'à 1,5 m) rapide et agile. Inoffensif mais mordeur si capturé.",habitat:"Talus, coteaux, haies, buissons"},
+  {id:100,name:"Couleuvre d'Esculape",latin:"Zamenis longissimus",type:"Reptile",emoji:"🐍",desc:"Grand serpent élancé brun-olive, inoffensif et excellent grimpeur. Symbole de la médecine (caducée).",habitat:"Coteaux boisés, forêts claires, murs"},
+  {id:101,name:"Vipère aspic",latin:"Vipera aspis",type:"Reptile",emoji:"🐍",desc:"Seul serpent venimeux de la région. Pupille verticale, museau légèrement retroussé. Très prudente.",habitat:"Coteaux pierreux secs, lisières, rochers"},
+  {id:102,name:"Cistude d'Europe",latin:"Emys orbicularis",type:"Reptile",emoji:"🐢",desc:"Seule tortue aquatique native de France. Très rare en Bourgogne, en forte régression. Protégée.",habitat:"Étangs, mares, marais à végétation"},
+  // ── AMPHIBIENS ──────────────────────────────────────────────────────────────
+  {id:103,name:"Grenouille rousse",latin:"Rana temporaria",type:"Amphibien",emoji:"🐸",desc:"La plus commune des grenouilles brunes. Envahit les mares en masse dès février pour se reproduire.",habitat:"Mares, étangs, prairies humides, bois"},
+  {id:104,name:"Grenouille agile",latin:"Rana dalmatina",type:"Amphibien",emoji:"🐸",desc:"Pattes postérieures très longues (record de saut). Plus forestière que la grenouille rousse.",habitat:"Forêts humides, prairies, mares"},
+  {id:105,name:"Grenouille verte",latin:"Pelophylax kl. esculentus",type:"Amphibien",emoji:"🐸",desc:"Bruyante, présente dans tous les étangs bourguignons. Son coassement estival est incontournable.",habitat:"Étangs, mares, fossés, canaux"},
+  {id:106,name:"Crapaud commun",latin:"Bufo bufo",type:"Amphibien",emoji:"🐸",desc:"Grand et verruqueux, migre massivement vers ses mares natales dès les premières pluies de mars.",habitat:"Forêts, jardins, zones humides, caves"},
+  {id:107,name:"Crapaud calamite",latin:"Epidalea calamita",type:"Amphibien",emoji:"🐸",desc:"Ligne dorsale jaune caractéristique. Marche plus qu'il ne saute. Chant très sonore par belle nuit d'été.",habitat:"Sablières, gravières, prairies sèches"},
+  {id:108,name:"Rainette verte",latin:"Hyla arborea",type:"Amphibien",emoji:"🐸",desc:"Petite grenouille verte grimpant aux arbres grâce à ses ventouses. Son chant strident annonce la pluie.",habitat:"Roselières, haies, buissons, lisières"},
+  {id:109,name:"Alyte accoucheur",latin:"Alytes obstetricans",type:"Amphibien",emoji:"🐸",desc:"Le mâle porte les œufs enroulés autour de ses pattes jusqu'à l'éclosion. Chant mélancolique nocturne.",habitat:"Talus, murets, carrières, jardins"},
+  {id:110,name:"Triton ponctué",latin:"Lissotriton vulgaris",type:"Amphibien",emoji:"🦎",desc:"Le plus commun des tritons. Ventre orange tacheté, crête basse chez le mâle en phase aquatique.",habitat:"Mares, étangs, fossés, jardins"},
+  {id:111,name:"Triton palmé",latin:"Lissotriton helveticus",type:"Amphibien",emoji:"🦎",desc:"Petites palmures aux pattes postérieures et filament caudal chez le mâle. Très commun dans les mares forestières.",habitat:"Mares, fossés, ruisseaux calmes"},
+  {id:112,name:"Triton alpestre",latin:"Ichthyosaura alpestris",type:"Amphibien",emoji:"🦎",desc:"Ventre orange uni (sans taches). Flancs bleu ardoise chez le mâle. Préfère les eaux fraîches.",habitat:"Mares, étangs, eaux fraîches"},
+  {id:113,name:"Triton crêté",latin:"Triturus cristatus",type:"Amphibien",emoji:"🦎",desc:"Protégé en France. Le mâle arbore une magnifique crête dentelée en période nuptiale. Peau verruqueuse.",habitat:"Mares, étangs, fossés à végétation"},
+  {id:114,name:"Salamandre tachetée",latin:"Salamandra salamandra",type:"Amphibien",emoji:"🦎",desc:"Robe noire aux taches jaunes vif. Nocturne, sort lors des nuits de pluie d'automne. Peau légèrement toxique.",habitat:"Forêts humides, sources, ruisseaux"},
+];
+
+const TYPE_CLASS = {
+  "Mammifère":"t-mammifere","Oiseau":"t-oiseau","Reptile":"t-reptile","Amphibien":"t-amphibien"
+};
+
+/* ───────────────────────── STOCKAGE SÉCURISÉ ─────────────────────────
+   Sur certains navigateurs mobiles (Safari iOS en navigation privée,
+   ouverture du fichier en file://, réglages de confidentialité stricts),
+   l'accès à localStorage peut lever une exception. On enrobe tous les
+   accès pour ne jamais planter le reste de l'application. Si le stockage
+   est indisponible, on bascule en mémoire (les données ne survivront pas
+   à la fermeture de la page, mais l'app reste utilisable). */
+let storageAvailable = true;
+const memoryStore = {};
+const safeStorage = {
+  get(key, fallback){
+    try { const v = localStorage.getItem(key); return v === null ? fallback : v; }
+    catch(e){ storageAvailable = false; return (key in memoryStore) ? memoryStore[key] : fallback; }
+  },
+  set(key, value){
+    try { localStorage.setItem(key, value); }
+    catch(e){ storageAvailable = false; memoryStore[key] = value; }
+  }
+};
+
+let captures = {};
+try { captures = JSON.parse(safeStorage.get('faune_cdo_v3', '{}')); } catch(e){ captures = {}; }
+// Ce cache local s'affiche immédiatement ; il est remplacé dès que Supabase répond (voir loadFromSupabase).
+
+/* ───────────────────────── MIGRATION DES IDs ─────────────────────────
+   La liste des espèces a été réorganisée (regroupement par famille/emoji),
+   ce qui a changé les numéros # de certains animaux. Cette table permet de
+   réassocier automatiquement les captures et points GPS déjà enregistrés
+   à leur bon animal, sans rien perdre. Elle ne s'exécute qu'une fois. */
+const ID_MIGRATION_MAP = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":20,"16":22,"17":23,"18":24,"19":15,"20":25,"21":26,"22":27,"23":28,"24":29,"25":16,"26":21,"27":17,"28":18,"29":19,"30":30,"31":31,"32":32,"33":33,"34":34,"35":35,"36":36,"37":37,"38":38,"39":39,"40":40,"41":41,"42":42,"43":43,"44":44,"45":45,"46":46,"47":47,"48":48,"49":49,"50":50,"51":51,"52":52,"53":53,"54":73,"55":75,"56":76,"57":77,"58":78,"59":79,"60":80,"61":81,"62":82,"63":83,"64":84,"65":85,"66":86,"67":87,"68":88,"69":89,"70":90,"71":74,"72":54,"73":55,"74":56,"75":57,"76":58,"77":59,"78":60,"79":61,"80":62,"81":63,"82":64,"83":65,"84":91,"85":92,"86":93,"87":66,"88":67,"89":68,"90":69,"91":70,"92":71,"93":72,"94":94,"95":95,"96":96,"97":97,"98":98,"99":99,"100":100,"101":101,"102":102,"103":103,"104":104,"105":105,"106":106,"107":107,"108":108,"109":110,"110":111,"111":112,"112":113,"113":114,"114":109};
+
+function migrateIdsIfNeeded(){
+  const migrationDone = safeStorage.get('faune_migration_v2_done', null);
+  if(migrationDone === 'true') return;
+
+  // Migrer captures
+  const newCaptures = {};
+  Object.keys(captures).forEach(oldId => {
+    const newId = ID_MIGRATION_MAP[oldId];
+    if(newId) newCaptures[newId] = captures[oldId];
+  });
+  captures = newCaptures;
+  save();
+
+  // Migrer sightings (tableau, donc on mute animalId directement)
+  sightings.forEach(s => {
+    const newId = ID_MIGRATION_MAP[String(s.animalId)];
+    if(newId) s.animalId = newId;
+  });
+  saveSightings();
+
+  safeStorage.set('faune_migration_v2_done', 'true');
+}
+
+// Theme
+let theme = safeStorage.get('faune_theme', 'light');
+
+function applyTheme(t) {
+  theme = t;
+  document.body.setAttribute('data-theme', t);
+  const btn = document.getElementById('theme-btn');
+  if(btn) btn.textContent = t === 'dark' ? '☀️ Mode clair' : '🌙 Mode sombre';
+  safeStorage.set('faune_theme', t);
+}
+applyTheme(theme);
+function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
+
+let currentAnimal = null;
+let currentPhoto = null;
+let currentFilter = "all";
+let searchText = "";
+
+function save(){
+  safeStorage.set('faune_cdo_v3', JSON.stringify(captures)); // cache local, lecture instantanée au prochain chargement
+}
+
+// Écrit UNE capture dans Supabase (appelé après chaque modification d'une fiche)
+async function pushCaptureToSupabase(animalId){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
+  setSyncStatus('syncing', 'Synchronisation…');
+  const cap = captures[animalId];
+  try {
+    if(!cap){
+      // Fiche réinitialisée → suppression côté serveur
+      const { error } = await supabaseClient.from('captures').delete().eq('animal_id', animalId);
+      if(error) throw error;
+    } else {
+      const { error } = await supabaseClient.from('captures').upsert({
+        animal_id: animalId,
+        date: cap.date || null,
+        time: cap.time || null,
+        lieu: cap.lieu || null,
+        notes: cap.notes || null,
+        photo: cap.photo || null,
+        captured_at: cap.capturedAt || null
+      });
+      if(error) throw error;
+    }
+    setSyncStatus('ok', 'Synchronisé');
+  } catch(e){
+    console.error('Erreur sync capture:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+function updateStats(){
+  const c = Object.keys(captures).length;
+  const t = ANIMALS.length;
+  document.getElementById("count-cap").textContent = c;
+  document.getElementById("count-tot").textContent = t;
+  document.getElementById("progress").style.width = (c/t*100).toFixed(1)+"%";
+}
+
+/* Renvoie l'ensemble des 10 premiers IDs capturés, par ordre chronologique.
+   Les captures avec un horodatage système (capturedAt) sont triées dessus ;
+   les anciennes captures sans cet horodatage (créées avant cette mise à jour)
+   sont considérées plus anciennes et triées selon leur ordre d'insertion. */
+function getFirstTenCapturedIds(){
+  const entries = Object.keys(captures).map(id => ({
+    id: Number(id),
+    capturedAt: captures[id].capturedAt || 0 // 0 = ancienne capture, considérée antérieure
+  }));
+  entries.sort((a, b) => a.capturedAt - b.capturedAt);
+  return new Set(entries.slice(0, 10).map(e => e.id));
+}
+
+function filtered(){
+  return ANIMALS.filter(a => {
+    if(currentFilter === "captured" && !captures[a.id]) return false;
+    if(currentFilter !== "all" && currentFilter !== "captured" && a.type !== currentFilter) return false;
+    const q = searchText.toLowerCase();
+    if(q && !a.name.toLowerCase().includes(q) && !a.latin.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function render(){
+  const list = filtered();
+  const grid = document.getElementById("grid");
+  if(!list.length){
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>Aucun animal trouvé</div>';
+    updateStats(); return;
+  }
+  const firstTenIds = getFirstTenCapturedIds();
+  grid.innerHTML = list.map(a => {
+    const cap = captures[a.id];
+    const isFirstTen = cap && firstTenIds.has(a.id);
+    const img = cap && cap.photo
+      ? `<img src="${cap.photo}" alt="${a.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`
+      : `<span class="card-emoji">${a.emoji}</span>`;
+    return `<div class="card${cap?' captured':''}" onclick="openModal(${a.id})" tabindex="0" role="button" aria-label="${a.name}">
+      ${isFirstTen?'<div class="first-badge" title="Première rencontre">🥇</div>':''}
+      ${cap?'<div class="cap-dot"></div>':''}
+      <div class="card-num">#${String(a.id).padStart(3,'0')}</div>
+      <div class="card-img">${img}</div>
+      <div class="card-name">${a.name}</div>
+      <div class="card-type">${a.type}</div>
+      ${cap?`<div class="card-date">📅 ${cap.date||''}${cap.time?` · ${cap.time}`:''}</div>`:''}
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function openModal(id){
+  const a = ANIMALS.find(x=>x.id===id);
+  currentAnimal = a;
+  currentPhoto = null;
+  const cap = captures[id];
+  const animalSightings = sightings.filter(s => s.animalId === id);
+  const imgHtml = cap && cap.photo
+    ? `<div class="modal-img" style="position:relative">
+        <img src="${cap.photo}" alt="${a.name}">
+        <label for="edit-photo-file" class="edit-photo-btn" title="Changer la photo">✏️</label>
+        <input type="file" id="edit-photo-file" accept="image/*" onchange="handleEditPhoto(this, ${id})" style="display:none">
+      </div>`
+    : `<div class="modal-img">${a.emoji}</div>`;
+
+  let sightingsListHtml = '';
+  if(animalSightings.length){
+    sightingsListHtml = `<div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500">📍 Points sur la carte (${animalSightings.length})</div>
+      ${animalSightings.map(s => `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);padding:4px 0">
+          <span><span class="legend-dot ${s.kind==='capture'?'green':'yellow'}"></span>${s.date}${s.time?` ${s.time}`:''}${s.lieu?' — '+s.lieu:''}</span>
+          <button onclick="deleteSighting('${s.id}')" style="border:none;background:none;color:#E24B4A;cursor:pointer;font-size:11px;padding:2px 6px">✕</button>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  const capSection = cap
+    ? `<div class="capture-section">
+        <div class="capture-done">✓ Capturé le ${cap.date}${cap.time?` à ${cap.time}`:''}${cap.lieu?' — '+cap.lieu:''}</div>
+        ${cap.notes?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">"${cap.notes}"</div>`:''}
+        ${!cap.photo?`<label for="add-photo-file" class="data-btn" style="display:inline-flex;margin-bottom:10px;cursor:pointer">📷 Ajouter une photo</label><input type="file" id="add-photo-file" accept="image/*" onchange="handleEditPhoto(this, ${id})" style="display:none">`:''}
+        <button class="btn-capture" style="background:#E8B400" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
+        <button class="btn-release" onclick="releaseAnimal(${id})">↩ Réinitialiser cette fiche</button>
+        ${sightingsListHtml}
+      </div>`
+    : `<div class="capture-section">
+        <div class="capture-title">Marquer comme observé (1ère fois = capture)</div>
+        <div class="photo-row">
+          <label class="photo-label" for="photo-file">📷 Ajouter ma photo</label>
+          <input type="file" id="photo-file" accept="image/*" onchange="handlePhoto(this)" style="display:none">
+          <div id="photo-prev" class="photo-placeholder">📷</div>
+        </div>
+        <div class="input-row">
+          <input type="date" id="cap-date" value="${new Date().toISOString().split('T')[0]}" aria-label="Date">
+          <input type="time" id="cap-time" value="${new Date().toTimeString().slice(0,5)}" aria-label="Heure">
+        </div>
+        <div class="input-row">
+          <input type="text" id="cap-lieu" placeholder="Lieu (optionnel)" aria-label="Lieu">
+        </div>
+        <input type="text" id="cap-notes" placeholder="Notes (comportement, météo…)" aria-label="Notes" class="notes-input">
+        <button class="btn-capture" onclick="captureAnimal(${id})">🎯 Capturer !</button>
+        <div class="map-hint" style="margin-top:8px">Tu pourras placer le point GPS juste après.</div>
+      </div>`;
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-head">
+      <div>
+        <div class="modal-num">#${String(a.id).padStart(3,'0')}</div>
+        <div class="modal-name">${a.name}</div>
+        <div class="modal-latin">${a.latin}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+    </div>
+    ${imgHtml}
+    <span class="type-badge ${TYPE_CLASS[a.type]}">${a.type}</span>
+    <div class="modal-desc">${a.desc}</div>
+    <div class="modal-habitat">${a.habitat}</div>
+    ${capSection}`;
+  document.getElementById("modal-bg").classList.add("open");
+}
+
+function closeModal(){
+  document.getElementById("modal-bg").classList.remove("open");
+  currentAnimal = null;
+  currentPhoto = null;
+}
+
+function handlePhoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentPhoto = e.target.result;
+    const prev = document.getElementById("photo-prev");
+    if(prev) prev.innerHTML = `<img src="${currentPhoto}" class="photo-thumb" alt="Aperçu">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleEditPhoto(input, id){
+  if(!requireEditMode()) { input.value=''; return; }
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    if(!captures[id]) return;
+    captures[id].photo = e.target.result; // seule la photo change, le reste de la fiche est intact
+    save();
+    pushCaptureToSupabase(id);
+    render();
+    openModal(id); // recharge la fiche pour afficher la nouvelle photo
+    showToast('✅ Photo mise à jour');
+  };
+  reader.readAsDataURL(file);
+}
+
+function captureAnimal(id){
+  if(!requireEditMode()) return;
+  const d = document.getElementById("cap-date")?.value || new Date().toISOString().split('T')[0];
+  const [y,m,day] = d.split('-');
+  const dateStr = `${day}/${m}/${y}`;
+  const timeStr = document.getElementById("cap-time")?.value || "";
+  const lieu = document.getElementById("cap-lieu")?.value || "";
+  const notes = document.getElementById("cap-notes")?.value || "";
+  captures[id] = { date: dateStr, time: timeStr, lieu, notes, photo: currentPhoto || null, capturedAt: Date.now() };
+  save();
+  pushCaptureToSupabase(id);
+  closeModal();
+  render();
+  // Propose de placer le point de capture sur la carte
+  pendingSighting = { animalId: id, kind: 'capture', date: dateStr, time: timeStr, lieu, notes };
+  goToMapForPlacing();
+}
+
+function releaseAnimal(id){
+  if(!requireEditMode()) return;
+  if(!confirm("Supprimer cette fiche capturée ? Les points sur la carte associés seront aussi supprimés.")) return;
+  delete captures[id];
+  const removedSightingIds = sightings.filter(s => s.animalId === id).map(s => s.id);
+  sightings = sightings.filter(s => s.animalId !== id);
+  saveSightings();
+  save();
+  pushCaptureToSupabase(id); // capture absente -> déclenche une suppression côté serveur
+  removedSightingIds.forEach(sid => deleteSightingFromSupabase(sid));
+  closeModal();
+  render();
+  renderMapMarkers();
+}
+
+function startAddSighting(id){
+  if(!requireEditMode()) return;
+  const animal = ANIMALS.find(a => a.id === id);
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const timeStr = now.toTimeString().slice(0,5);
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-head">
+      <div>
+        <div class="modal-num">#${String(animal.id).padStart(3,'0')}</div>
+        <div class="modal-name">${animal.name}</div>
+        <div class="modal-latin">Nouvelle observation</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="capture-section" style="border-top:none;padding-top:0">
+      <div class="input-row">
+        <input type="date" id="sight-date" value="${todayStr}" aria-label="Date">
+        <input type="time" id="sight-time" value="${timeStr}" aria-label="Heure">
+      </div>
+      <div class="input-row">
+        <input type="text" id="sight-lieu" placeholder="Lieu (optionnel)" aria-label="Lieu">
+      </div>
+      <input type="text" id="sight-notes" placeholder="Notes (comportement, météo…)" aria-label="Notes" class="notes-input">
+      <button class="btn-capture" style="background:#E8B400" onclick="confirmAddSighting(${id})">📍 Placer sur la carte</button>
+    </div>`;
+}
+
+function confirmAddSighting(id){
+  const d = document.getElementById("sight-date")?.value || new Date().toISOString().split('T')[0];
+  const [y,m,day] = d.split('-');
+  const dateStr = `${day}/${m}/${y}`;
+  const timeStr = document.getElementById("sight-time")?.value || "";
+  const lieu = document.getElementById("sight-lieu")?.value || "";
+  const notes = document.getElementById("sight-notes")?.value || "";
+  pendingSighting = { animalId: id, kind: 'observation', date: dateStr, time: timeStr, lieu, notes };
+  closeModal();
+  goToMapForPlacing();
+}
+
+function deleteSighting(sightingId){
+  if(!requireEditMode()) return;
+  sightings = sightings.filter(s => s.id !== sightingId);
+  saveSightings();
+  deleteSightingFromSupabase(sightingId);
+  renderMapMarkers();
+  openModal(currentAnimal.id);
+}
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active","active-cap"));
+    currentFilter = btn.dataset.f;
+    btn.classList.add(currentFilter === "captured" ? "active-cap" : "active");
+    render();
+  });
+});
+
+document.getElementById("search").addEventListener("input", e => {
+  searchText = e.target.value;
+  render();
+});
+
+document.getElementById("modal-bg").addEventListener("click", e => {
+  if(e.target === document.getElementById("modal-bg")) closeModal();
+});
+
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); });
+
+document.getElementById("grid").addEventListener("keydown", e => {
+  if(e.key==="Enter" || e.key===" ") { e.target.click(); e.preventDefault(); }
+});
+
+/* ───────────────────────── VIEW TABS ───────────────────────── */
+document.querySelectorAll(".view-tab").forEach(tab => {
+  tab.addEventListener("click", () => switchView(tab.dataset.view));
+});
+
+function switchView(viewName){
+  document.querySelectorAll(".view-tab").forEach(t => t.classList.toggle("active", t.dataset.view === viewName));
+  document.getElementById("view-grid").classList.toggle("active", viewName === "grid");
+  document.getElementById("view-map").classList.toggle("active", viewName === "map");
+  if(viewName === "map"){
+    setTimeout(() => { if(map) map.invalidateSize(); }, 50);
+  }
+}
+
+/* ───────────────────────── MAP ───────────────────────── */
+let map = null;
+let markersLayer = null;
+let pendingSighting = null; // {animalId, kind, date, lieu, notes}
+
+function initMap(){
+  if(typeof L === 'undefined'){
+    // Leaflet n'a pas pu se charger (pas de réseau, CDN bloqué…)
+    const mapEl = document.getElementById('map');
+    if(mapEl) mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;color:var(--text-muted);font-size:13px">🗺️ La carte nécessite une connexion internet pour charger le fond de carte.<br>Réessaie avec une connexion active.</div>';
+    return;
+  }
+  try {
+    map = L.map('map', { scrollWheelZoom: true }).setView(VILLAGE_COORDS, 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 19
+    }).addTo(map);
+    L.marker(VILLAGE_COORDS, {
+      icon: L.divIcon({ className: '', html: '<div style="font-size:22px">🏠</div>', iconSize:[22,22], iconAnchor:[11,11] })
+    }).addTo(map).bindPopup("Marigny-le-Cahouët");
+
+    markersLayer = L.layerGroup().addTo(map);
+
+    map.on('click', (e) => {
+      if(!pendingSighting) return;
+      placePendingSightingAt(e.latlng.lat, e.latlng.lng);
+    });
+
+    renderMapMarkers();
+  } catch(e){
+    console.error('Erreur init carte:', e);
+  }
+}
+
+function goToMapForPlacing(){
+  switchView('map');
+  const banner = document.getElementById('map-banner');
+  const text = document.getElementById('map-banner-text');
+  const animal = ANIMALS.find(a => a.id === pendingSighting.animalId);
+  const kindLabel = pendingSighting.kind === 'capture' ? 'la capture' : "l'observation";
+  text.textContent = `📍 Clique sur la carte pour placer ${kindLabel} de : ${animal.name}`;
+  banner.classList.add('show');
+  if(map) map.getContainer().style.cursor = 'crosshair';
+}
+
+function cancelPlacing(){
+  pendingSighting = null;
+  document.getElementById('map-banner').classList.remove('show');
+  if(map) map.getContainer().style.cursor = '';
+}
+
+function placePendingSightingAt(lat, lng){
+  const s = {
+    id: 'sight_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    animalId: pendingSighting.animalId,
+    kind: pendingSighting.kind,
+    date: pendingSighting.date,
+    time: pendingSighting.time || '',
+    lieu: pendingSighting.lieu,
+    notes: pendingSighting.notes,
+    lat, lng
+  };
+  sightings.push(s);
+  saveSightings();
+  pushSightingToSupabase(s);
+  cancelPlacing();
+  renderMapMarkers();
+}
+
+function getMapFilters(){
+  return {
+    type: document.getElementById('map-filter-type')?.value || 'all',
+    species: document.getElementById('map-filter-species')?.value || 'all',
+    kind: document.getElementById('map-filter-kind')?.value || 'all',
+    month: document.getElementById('map-filter-month')?.value || '' // format YYYY-MM
+  };
+}
+
+function sightingMatchesFilters(s, f){
+  const animal = ANIMALS.find(a => a.id === s.animalId);
+  if(!animal) return false;
+  if(f.type !== 'all' && animal.type !== f.type) return false;
+  if(f.species !== 'all' && String(s.animalId) !== f.species) return false;
+  if(f.kind !== 'all' && s.kind !== f.kind) return false;
+  if(f.month){
+    // s.date is DD/MM/YYYY, f.month is YYYY-MM
+    const [day, mo, yr] = s.date.split('/');
+    if(`${yr}-${mo}` !== f.month) return false;
+  }
+  return true;
+}
+
+function populateSpeciesFilter(){
+  const sel = document.getElementById('map-filter-species');
+  if(!sel) return;
+  const usedAnimalIds = [...new Set(sightings.map(s => s.animalId))];
+  const usedAnimals = ANIMALS.filter(a => usedAnimalIds.includes(a.id)).sort((a,b) => a.name.localeCompare(b.name));
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="all">Toutes les espèces</option>' +
+    usedAnimals.map(a => `<option value="${a.id}">${a.emoji} ${a.name}</option>`).join('');
+  if(usedAnimalIds.includes(Number(currentVal))) sel.value = currentVal;
+}
+
+function clearMapFilters(){
+  document.getElementById('map-filter-type').value = 'all';
+  document.getElementById('map-filter-species').value = 'all';
+  document.getElementById('map-filter-kind').value = 'all';
+  document.getElementById('map-filter-month').value = '';
+  renderMapMarkers();
+}
+
+['map-filter-type','map-filter-species','map-filter-kind','map-filter-month'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', renderMapMarkers);
+});
+
+function renderMapMarkers(){
+  if(!markersLayer) return;
+  populateSpeciesFilter();
+  const f = getMapFilters();
+  markersLayer.clearLayers();
+  let shown = 0;
+  sightings.forEach(s => {
+    if(!sightingMatchesFilters(s, f)) return;
+    const animal = ANIMALS.find(a => a.id === s.animalId);
+    if(!animal) return;
+    shown++;
+    const color = s.kind === 'capture' ? '#1D9E75' : '#E8B400';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
+      iconSize: [16,16], iconAnchor: [8,8]
+    });
+    const marker = L.marker([s.lat, s.lng], { icon }).addTo(markersLayer);
+    marker.bindPopup(`
+      <div class="popup-pin-title">${animal.emoji} ${animal.name}</div>
+      <div class="popup-pin-meta">${s.kind === 'capture' ? '🟢 Capture' : '🟡 Observation'} — ${s.date}${s.time?` ${s.time}`:''}${s.lieu ? ' — '+s.lieu : ''}</div>
+    `);
+  });
+  const countEl = document.getElementById('map-count');
+  if(countEl) countEl.textContent = `${shown} / ${sightings.length} point${sightings.length>1?'s':''} affiché${shown>1?'s':''}`;
+}
+
+function loadSightings(){
+  try { sightings = JSON.parse(safeStorage.get('faune_sightings_v1', '[]')); } catch(e){ sightings = []; }
+}
+function saveSightings(){ safeStorage.set('faune_sightings_v1', JSON.stringify(sightings)); }
+
+// Ajoute UN sighting dans Supabase
+async function pushSightingToSupabase(sighting){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
+  setSyncStatus('syncing', 'Synchronisation…');
+  try {
+    const { error } = await supabaseClient.from('sightings').upsert({
+      id: sighting.id,
+      animal_id: sighting.animalId,
+      kind: sighting.kind,
+      date: sighting.date || null,
+      time: sighting.time || null,
+      lieu: sighting.lieu || null,
+      notes: sighting.notes || null,
+      lat: sighting.lat,
+      lng: sighting.lng
+    });
+    if(error) throw error;
+    setSyncStatus('ok', 'Synchronisé');
+  } catch(e){
+    console.error('Erreur sync sighting:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+// Supprime UN sighting de Supabase
+async function deleteSightingFromSupabase(sightingId){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
+  setSyncStatus('syncing', 'Synchronisation…');
+  try {
+    const { error } = await supabaseClient.from('sightings').delete().eq('id', sightingId);
+    if(error) throw error;
+    setSyncStatus('ok', 'Synchronisé');
+  } catch(e){
+    console.error('Erreur suppression sighting:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+let sightings = [];
+loadSightings();
+
+/* ───────────────────────── CHARGEMENT DEPUIS SUPABASE ─────────────────────────
+   Au démarrage, on récupère l'état réel partagé depuis la base. Le cache local
+   (affiché en attendant) est alors remplacé par les données serveur, qui sont
+   la source de vérité pour tout le monde. */
+async function loadFromSupabase(){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne — données locales uniquement'); return; }
+  setSyncStatus('syncing', 'Chargement…');
+  try {
+    const [capRes, sightRes] = await Promise.all([
+      supabaseClient.from('captures').select('*'),
+      supabaseClient.from('sightings').select('*')
+    ]);
+    if(capRes.error) throw capRes.error;
+    if(sightRes.error) throw sightRes.error;
+
+    const newCaptures = {};
+    (capRes.data || []).forEach(row => {
+      newCaptures[row.animal_id] = {
+        date: row.date, time: row.time, lieu: row.lieu, notes: row.notes,
+        photo: row.photo, capturedAt: row.captured_at
+      };
+    });
+    captures = newCaptures;
+    save();
+
+    sightings = (sightRes.data || []).map(row => ({
+      id: row.id, animalId: row.animal_id, kind: row.kind, date: row.date,
+      time: row.time, lieu: row.lieu, notes: row.notes, lat: row.lat, lng: row.lng
+    }));
+    saveSightings();
+
+    setSyncStatus('ok', 'Synchronisé');
+    render();
+    renderMapMarkers();
+  } catch(e){
+    console.error('Erreur chargement Supabase:', e);
+    setSyncStatus('error', 'Erreur de connexion — données locales affichées');
+  }
+}
+
+/* ───────────────────────── MODE ÉDITION (verrou par code) ─────────────────────────
+   Tout le monde peut consulter FauneDex via le lien. Seule la personne qui
+   connaît le code secret peut ajouter ou modifier des captures/observations.
+   Le code n'est jamais stocké en clair : on vérifie son empreinte SHA-256. */
+function isEditUnlocked(){
+  return editModeUnlocked === true;
+}
+
+function requireEditMode(){
+  if(isEditUnlocked()) return true;
+  openUnlockModal();
+  return false;
+}
+
+function updateLockButton(){
+  const btn = document.getElementById('lock-btn');
+  if(!btn) return;
+  if(isEditUnlocked()){
+    btn.textContent = '🔓 Mode édition';
+    btn.classList.add('unlocked');
+  } else {
+    btn.textContent = '🔒 Lecture seule';
+    btn.classList.remove('unlocked');
+  }
+}
+
+function onLockButtonClick(){
+  if(isEditUnlocked()){
+    // Permet de reverrouiller manuellement (utile sur un appareil partagé)
+    if(confirm("Repasser en lecture seule sur cet appareil ?")){
+      editModeUnlocked = false;
+      safeStorage.set('faune_edit_unlocked', 'false');
+      updateLockButton();
+      showToast('🔒 Repassé en lecture seule');
+    }
+  } else {
+    openUnlockModal();
+  }
+}
+
+function openUnlockModal(){
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-head">
+      <div><div class="modal-name">🔒 Mode édition</div></div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="pin-modal">
+      <div class="modal-desc">Entre le code secret pour pouvoir ajouter ou modifier des captures sur cet appareil.</div>
+      <input type="password" id="unlock-pin" class="pin-input" maxlength="8" inputmode="numeric" placeholder="••••" autofocus>
+      <button class="btn-capture" onclick="tryUnlock()">Déverrouiller</button>
+    </div>`;
+  document.getElementById("modal-bg").classList.add("open");
+  setTimeout(() => document.getElementById('unlock-pin')?.focus(), 50);
+  document.getElementById('unlock-pin')?.addEventListener('keydown', e => {
+    if(e.key === 'Enter') tryUnlock();
+  });
+}
+
+async function tryUnlock(){
+  const input = document.getElementById('unlock-pin');
+  const code = input?.value || '';
+  const hash = await sha256Hex(code);
+  if(hash === EDIT_CODE_HASH || hash === EDIT_CODE_HASH_FALLBACK){
+    editModeUnlocked = true;
+    safeStorage.set('faune_edit_unlocked', 'true');
+    updateLockButton();
+    closeModal();
+    showToast('🔓 Mode édition activé');
+  } else {
+    input.style.borderColor = '#E24B4A';
+    input.value = '';
+    input.placeholder = 'Code incorrect';
+    setTimeout(() => { input.style.borderColor = ''; input.placeholder = '••••'; }, 1500);
+  }
+}
+
+/* ───────────────────────── EXPORT / IMPORT ───────────────────────── */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function exportData(){
+  const payload = {
+    appName: "FauneDex — Côte-d'Or",
+    exportVersion: 1,
+    exportedAt: new Date().toISOString(),
+    captures,
+    sightings
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateTag = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `faune-cote-dor-sauvegarde-${dateTag}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✅ Sauvegarde téléchargée');
+}
+
+function importData(input){
+  if(!requireEditMode()) { input.value=''; return; }
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    let data;
+    try { data = JSON.parse(e.target.result); }
+    catch(err){ showToast('❌ Fichier invalide'); input.value=''; return; }
+
+    if(!data || (typeof data.captures !== 'object') || !Array.isArray(data.sightings)){
+      showToast('❌ Format de fichier non reconnu');
+      input.value = '';
+      return;
+    }
+
+    const incomingCapCount = Object.keys(data.captures).length;
+    const incomingSightCount = data.sightings.length;
+    const currentCapCount = Object.keys(captures).length;
+    const currentSightCount = sightings.length;
+
+    const mode = confirm(
+      `Le fichier contient ${incomingCapCount} capture(s) et ${incomingSightCount} point(s) carte.\n` +
+      `Tu en as actuellement ${currentCapCount} et ${currentSightCount}.\n\n` +
+      `OK = FUSIONNER avec tes données actuelles\nAnnuler = REMPLACER tes données actuelles par celles du fichier`
+    );
+
+    if(mode){
+      // Fusion : on garde l'existant, on ajoute ce qui manque
+      Object.keys(data.captures).forEach(id => {
+        if(!captures[id]) captures[id] = data.captures[id];
+      });
+      const existingIds = new Set(sightings.map(s => s.id));
+      data.sightings.forEach(s => {
+        if(!existingIds.has(s.id)) sightings.push(s);
+      });
+    } else {
+      // Remplacement total
+      captures = data.captures;
+      sightings = data.sightings;
+    }
+
+    save();
+    saveSightings();
+    render();
+    renderMapMarkers();
+    input.value = '';
+    showToast('⏳ Envoi vers la base partagée…');
+
+    // Pousse tout vers Supabase (l'import doit aussi peupler la base partagée)
+    setSyncStatus('syncing', 'Import en cours…');
+    try {
+      for(const id of Object.keys(captures)){
+        await pushCaptureToSupabase(Number(id));
+      }
+      for(const s of sightings){
+        await pushSightingToSupabase(s);
+      }
+      setSyncStatus('ok', 'Synchronisé');
+      showToast(mode ? '✅ Données fusionnées et synchronisées' : '✅ Données remplacées et synchronisées');
+    } catch(err){
+      console.error('Erreur import vers Supabase:', err);
+      setSyncStatus('error', 'Erreur de synchro');
+      showToast('⚠️ Import local OK, mais erreur de synchro avec la base partagée');
+    }
+  };
+  reader.readAsText(file);
+}
+
+migrateIdsIfNeeded();
+editModeUnlocked = safeStorage.get('faune_edit_unlocked', 'false') === 'true';
+updateLockButton();
+render();
+initMap();
+loadFromSupabase();
+</script>
+</body>
+</html>
