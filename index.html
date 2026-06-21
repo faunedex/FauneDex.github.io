@@ -261,7 +261,7 @@
   }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
   .legend-dot.green { background: #1D9E75; }
-  .legend-dot.yellow { background: #E8B400; }
+  .legend-dot.blue { background: #378ADD; }
   .map-hint { font-size: 12px; color: var(--text-hint); margin-top: 10px; text-align: center; }
   .map-banner {
     background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-sm);
@@ -437,7 +437,7 @@
       <div id="map"></div>
       <div class="map-legend">
         <span><span class="legend-dot green"></span>Capture (1ère observation)</span>
-        <span><span class="legend-dot yellow"></span>Observation (revue)</span>
+        <span><span class="legend-dot blue"></span>Observation (revue)</span>
       </div>
     </div>
     <div class="map-hint">Pour ajouter un point : ouvre une fiche animal et clique sur « 📍 Placer sur la carte ».</div>
@@ -872,7 +872,7 @@ function openModal(id){
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:500">📍 Points sur la carte (${animalSightings.length})</div>
       ${animalSightings.map(s => `
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted);padding:4px 0">
-          <span><span class="legend-dot ${s.kind==='capture'?'green':'yellow'}"></span>${s.date}${s.time?` ${s.time}`:''}${s.lieu?' — '+s.lieu:''}</span>
+          <span onclick="goToSightingOnMap('${s.id}')" style="cursor:pointer;text-decoration:underline;text-decoration-color:var(--border-strong);text-underline-offset:2px"><span class="legend-dot ${s.kind==='capture'?'green':'blue'}"></span>${s.date}${s.time?` ${s.time}`:''}${s.lieu?' — '+s.lieu:''}</span>
           <button onclick="deleteSighting('${s.id}')" style="border:none;background:none;color:#E24B4A;cursor:pointer;font-size:11px;padding:2px 6px">✕</button>
         </div>`).join('')}
     </div>`;
@@ -881,9 +881,17 @@ function openModal(id){
   const capSection = cap
     ? `<div class="capture-section">
         <div class="capture-done">✓ Capturé le ${cap.date}${cap.time?` à ${cap.time}`:''}${cap.lieu?' — '+cap.lieu:''}</div>
-        ${cap.notes?`<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-style:italic">"${cap.notes}"</div>`:''}
+        <div id="notes-display-${id}">
+          ${cap.notes
+            ? `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:10px">
+                 <div style="font-size:12px;color:var(--text-muted);font-style:italic;flex:1">"${cap.notes}"</div>
+                 <button onclick="startEditNotes(${id})" title="Modifier la note" style="border:none;background:none;cursor:pointer;font-size:12px;padding:2px;flex-shrink:0">✏️</button>
+               </div>`
+            : `<button onclick="startEditNotes(${id})" class="data-btn" style="display:inline-flex;margin-bottom:10px;cursor:pointer">📝 Ajouter une note</button>`
+          }
+        </div>
         ${!cap.photo?`<label for="add-photo-file" class="data-btn" style="display:inline-flex;margin-bottom:10px;cursor:pointer">📷 Ajouter une photo</label><input type="file" id="add-photo-file" accept="image/*" onchange="handleEditPhoto(this, ${id})" style="display:none">`:''}
-        <button class="btn-capture" style="background:#E8B400" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
+        <button class="btn-capture" style="background:#378ADD" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
         <button class="btn-release" onclick="releaseAnimal(${id})">↩ Réinitialiser cette fiche</button>
         ${sightingsListHtml}
       </div>`
@@ -996,6 +1004,31 @@ function handleEditPhoto(input, id){
   });
 }
 
+function startEditNotes(id){
+  if(!requireEditMode()) return;
+  const cap = captures[id];
+  if(!cap) return;
+  const container = document.getElementById(`notes-display-${id}`);
+  if(!container) return;
+  container.innerHTML = `
+    <input type="text" id="notes-edit-input" class="notes-input" value="${(cap.notes || '').replace(/"/g, '&quot;')}" placeholder="Notes (comportement, météo…)" style="margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="btn-capture" style="flex:1" onclick="saveEditedNotes(${id})">✓ Enregistrer</button>
+      <button class="btn-release" style="flex:1;margin-top:0" onclick="openModal(${id})">Annuler</button>
+    </div>`;
+  document.getElementById('notes-edit-input')?.focus();
+}
+
+function saveEditedNotes(id){
+  if(!captures[id]) return;
+  const input = document.getElementById('notes-edit-input');
+  captures[id].notes = input ? input.value : (captures[id].notes || '');
+  save();
+  pushCaptureToSupabase(id);
+  openModal(id);
+  showToast('✅ Note mise à jour');
+}
+
 function captureAnimal(id){
   if(!requireEditMode()) return;
   const d = document.getElementById("cap-date")?.value || new Date().toISOString().split('T')[0];
@@ -1053,7 +1086,7 @@ function startAddSighting(id){
         <input type="text" id="sight-lieu" placeholder="Lieu (optionnel)" aria-label="Lieu">
       </div>
       <input type="text" id="sight-notes" placeholder="Notes (comportement, météo…)" aria-label="Notes" class="notes-input">
-      <button class="btn-capture" style="background:#E8B400" onclick="confirmAddSighting(${id})">📍 Placer sur la carte</button>
+      <button class="btn-capture" style="background:#378ADD" onclick="confirmAddSighting(${id})">📍 Placer sur la carte</button>
     </div>`;
 }
 
@@ -1236,18 +1269,21 @@ function clearMapFilters(){
   document.getElementById(id)?.addEventListener('change', renderMapMarkers);
 });
 
+let markersBySightingId = {};
+
 function renderMapMarkers(){
   if(!markersLayer) return;
   populateSpeciesFilter();
   const f = getMapFilters();
   markersLayer.clearLayers();
+  markersBySightingId = {};
   let shown = 0;
   sightings.forEach(s => {
     if(!sightingMatchesFilters(s, f)) return;
     const animal = ANIMALS.find(a => a.id === s.animalId);
     if(!animal) return;
     shown++;
-    const color = s.kind === 'capture' ? '#1D9E75' : '#E8B400';
+    const color = s.kind === 'capture' ? '#1D9E75' : '#378ADD';
     const icon = L.divIcon({
       className: '',
       html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`,
@@ -1256,11 +1292,29 @@ function renderMapMarkers(){
     const marker = L.marker([s.lat, s.lng], { icon }).addTo(markersLayer);
     marker.bindPopup(`
       <div class="popup-pin-title">${animal.emoji} ${animal.name}</div>
-      <div class="popup-pin-meta">${s.kind === 'capture' ? '🟢 Capture' : '🟡 Observation'} — ${s.date}${s.time?` ${s.time}`:''}${s.lieu ? ' — '+s.lieu : ''}</div>
+      <div class="popup-pin-meta">${s.kind === 'capture' ? '🟢 Capture' : '🔵 Observation'} — ${s.date}${s.time?` ${s.time}`:''}${s.lieu ? ' — '+s.lieu : ''}</div>
     `);
+    markersBySightingId[s.id] = marker;
   });
   const countEl = document.getElementById('map-count');
   if(countEl) countEl.textContent = `${shown} / ${sightings.length} point${sightings.length>1?'s':''} affiché${shown>1?'s':''}`;
+}
+
+function goToSightingOnMap(sightingId){
+  const sighting = sightings.find(s => s.id === sightingId);
+  if(!sighting){ showToast('⚠️ Ce point n\'est plus disponible'); return; }
+  closeModal();
+  switchView('map');
+  setTimeout(() => {
+    if(map) map.invalidateSize();
+    const marker = markersBySightingId[sightingId];
+    if(marker && map){
+      map.setView([sighting.lat, sighting.lng], 16);
+      marker.openPopup();
+    } else {
+      showToast('⚠️ Point hors des filtres actuels de la carte — réinitialise les filtres pour le voir');
+    }
+  }, 100);
 }
 
 function loadSightings(){
