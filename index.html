@@ -266,7 +266,6 @@
   .legend-dot.zone-green { background: #4CAF50; }
   .legend-dot.zone-orange { background: #F5A623; }
   .legend-dot.zone-red { background: #E0453E; }
-  .legend-dot.zone-gold { background: #D4AF37; }
   .legend-dot.zone-blue { background: #3B82C4; }
 
   /* SOUS-ONGLETS CARTES */
@@ -518,7 +517,6 @@
           <span><span class="legend-dot zone-green"></span>Spot moyen</span>
           <span><span class="legend-dot zone-orange"></span>Spot intéressant</span>
           <span><span class="legend-dot zone-red"></span>Hot Spot</span>
-          <span><span class="legend-dot zone-gold"></span>Golden Spot</span>
           <span><span class="legend-dot zone-blue"></span>Zone d'affût</span>
         </div>
       </div>
@@ -1298,7 +1296,6 @@ const ZONE_CATEGORIES = {
   green:  { label: "Spot moyen",        color: "#4CAF50", icon: "🐾" },
   orange: { label: "Spot intéressant",  color: "#F5A623", icon: "🐾" },
   red:    { label: "Hot Spot",          color: "#E0453E", icon: "🐾" },
-  gold:   { label: "Golden Spot",       color: "#D4AF37", icon: "🐾" },
   blue:   { label: "Zone d'affût",      color: "#3B82C4", icon: "🔭" }
 };
 const ZONE_SIZES = { petit: 60, moyen: 130, grand: 220 }; // rayon en mètres
@@ -1311,8 +1308,23 @@ let circlesByZoneId = {};
 
 function loadZones(){
   try { zones = JSON.parse(safeStorage.get('faune_zones_v1', '[]')); } catch(e){ zones = []; }
+  migrateZoneCategoriesIfNeeded();
 }
 function saveZonesLocal(){ safeStorage.set('faune_zones_v1', JSON.stringify(zones)); }
+
+/* La catégorie "gold" (Golden Spot) a été fusionnée avec "red" (Hot Spot).
+   Les zones déjà créées avec l'ancienne catégorie sont automatiquement
+   reclassées pour ne pas disparaître silencieusement de la carte. */
+function migrateZoneCategoriesIfNeeded(){
+  let changed = false;
+  zones.forEach(z => {
+    if(z.category === 'gold'){ z.category = 'red'; changed = true; }
+  });
+  if(changed){
+    saveZonesLocal();
+    zones.forEach(z => { if(z.category === 'red') pushZoneToSupabase(z); });
+  }
+}
 
 async function pushZoneToSupabase(zone){
   if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
@@ -1352,6 +1364,7 @@ async function loadZonesFromSupabase(){
       id: row.id, name: row.name, category: row.category, size: row.size, lat: row.lat, lng: row.lng
     }));
     saveZonesLocal();
+    migrateZoneCategoriesIfNeeded();
     renderZoneMarkers();
   } catch(e){
     console.error('Erreur chargement zones:', e);
