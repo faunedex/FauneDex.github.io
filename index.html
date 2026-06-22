@@ -180,12 +180,55 @@
     overflow: hidden;
   }
   .modal-img img { width: 100%; height: 100%; object-fit: cover; }
-  .edit-photo-btn {
-    position: absolute; bottom: 8px; right: 8px; width: 32px; height: 32px;
-    background: rgba(0,0,0,.55); border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; font-size: 15px; cursor: pointer; transition: background .15s;
+  /* GALERIE PHOTO */
+  .gallery-section { margin-top: 10px; }
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin-top: 8px;
   }
-  .edit-photo-btn:hover { background: rgba(0,0,0,.75); }
+  .gallery-thumb-wrap { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; }
+  .gallery-thumb {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 8px; cursor: pointer;
+    border: 2px solid transparent; display: block;
+  }
+  .gallery-thumb.is-primary { border-color: var(--green); }
+  .gallery-star {
+    position: absolute; top: 3px; left: 3px; font-size: 11px; color: #FFD54A;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.6));
+  }
+  .gallery-thumb-actions {
+    position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: flex-end; gap: 2px;
+    padding: 3px; background: linear-gradient(to top, rgba(0,0,0,.55), transparent); opacity: 0; transition: opacity .15s;
+  }
+  .gallery-thumb-wrap:hover .gallery-thumb-actions { opacity: 1; }
+  .gallery-thumb-actions button {
+    border: none; background: rgba(255,255,255,.9); border-radius: 6px; width: 20px; height: 20px;
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .gallery-add-btn {
+    aspect-ratio: 1; border-radius: 8px; border: 1px dashed var(--border-strong); display: flex;
+    align-items: center; justify-content: center; font-size: 18px; color: var(--text-hint);
+    cursor: pointer; transition: all .15s;
+  }
+  .gallery-add-btn:hover { background: var(--bg); border-color: var(--green); color: var(--green); }
+  .lightbox-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 10001; display: flex;
+    align-items: center; justify-content: center; padding: 20px; cursor: zoom-out;
+  }
+  .lightbox-bg img { max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+
+  /* GALERIE GLOBALE */
+  .gallery-wall {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+  }
+  .gallery-wall-item { position: relative; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; aspect-ratio: 1; }
+  .gallery-wall-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s; }
+  .gallery-wall-item:hover img { transform: scale(1.05); }
+  .gallery-wall-caption {
+    position: absolute; bottom: 0; left: 0; right: 0; padding: 6px 8px;
+    background: linear-gradient(to top, rgba(0,0,0,.7), transparent);
+    color: #fff; font-size: 11px; font-weight: 500;
+  }
+
   .type-badge {
     display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px;
     font-weight: 500; margin-bottom: 10px;
@@ -436,6 +479,7 @@
     <button class="view-tab active" data-view="grid">📋 Collection</button>
     <button class="view-tab" data-view="season">☀️ Saisons</button>
     <button class="view-tab" data-view="map">🗺️ Cartes</button>
+    <button class="view-tab" data-view="gallery">🖼️ Galerie</button>
   </div>
 
   <div class="view active" id="view-grid">
@@ -522,6 +566,16 @@
       </div>
       <div class="map-hint">Clique sur « ➕ Ajouter une zone », choisis sa catégorie et sa taille, puis place-la sur la carte.</div>
     </div>
+  </div>
+
+  <div class="view" id="view-gallery">
+    <div class="filters">
+      <select id="gallery-filter-species" aria-label="Filtrer par espèce">
+        <option value="all">Toutes les espèces</option>
+      </select>
+      <span class="map-count" id="gallery-count"></span>
+    </div>
+    <div class="gallery-wall" id="gallery-wall"></div>
   </div>
 </main>
 
@@ -800,7 +854,6 @@ async function pushCaptureToSupabase(animalId){
         time: cap.time || null,
         lieu: cap.lieu || null,
         notes: cap.notes || null,
-        photo: cap.photo || null,
         captured_at: cap.capturedAt || null
       });
       if(error) throw error;
@@ -916,8 +969,9 @@ function render(){
   grid.innerHTML = list.map(a => {
     const cap = captures[a.id];
     const isFirstTen = cap && firstTenIds.has(a.id);
-    const img = cap && cap.photo
-      ? `<img src="${cap.photo}" alt="${a.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.outerHTML='<span class=&quot;card-emoji&quot;>${a.emoji}</span>'">`
+    const primaryUrl = getPrimaryPhotoUrl(a.id);
+    const img = primaryUrl
+      ? `<img src="${primaryUrl}" alt="${a.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.outerHTML='<span class=&quot;card-emoji&quot;>${a.emoji}</span>'">`
       : `<span class="card-emoji">${a.emoji}</span>`;
     return `<div class="card${cap?' captured':''}" onclick="openModal(${a.id})" tabindex="0" role="button" aria-label="${a.name}">
       ${isFirstTen?'<div class="first-badge" title="Première rencontre">🥇</div>':''}
@@ -937,15 +991,38 @@ function openModal(id){
   const a = ANIMALS.find(x=>x.id===id);
   currentAnimal = a;
   currentPhoto = null;
+  pendingPhotoFile = null;
   const cap = captures[id];
   const animalSightings = sightings.filter(s => s.animalId === id);
-  const imgHtml = cap && cap.photo
+  const animalPhotos = photosByAnimalId[id] || [];
+  const primaryPhoto = animalPhotos.find(p => p.isPrimary) || animalPhotos[0];
+
+  const imgHtml = primaryPhoto
     ? `<div class="modal-img" style="position:relative">
-        <img src="${cap.photo}" alt="${a.name}" onerror="this.outerHTML='<span style=&quot;font-size:48px&quot;>${a.emoji}</span>'">
-        <label for="edit-photo-file" class="edit-photo-btn" title="Changer la photo">✏️</label>
-        <input type="file" id="edit-photo-file" accept="image/*" onchange="handleEditPhoto(this, ${id})" style="display:none">
+        <img src="${primaryPhoto.url}" alt="${a.name}" onerror="this.outerHTML='<span style=&quot;font-size:48px&quot;>${a.emoji}</span>'">
       </div>`
     : `<div class="modal-img">${a.emoji}</div>`;
+
+  let galleryHtml = '';
+  if(cap){
+    const thumbsHtml = animalPhotos.map(p => `
+      <div class="gallery-thumb-wrap">
+        <img src="${p.url}" alt="" class="gallery-thumb${p.isPrimary?' is-primary':''}" onclick="openLightbox('${p.url}')">
+        ${p.isPrimary ? '<div class="gallery-star" title="Photo principale">★</div>' : ''}
+        <div class="gallery-thumb-actions">
+          ${!p.isPrimary?`<button onclick="setPrimaryPhoto('${p.id}', ${id})" title="Définir comme photo principale">★</button>`:''}
+          <button onclick="deletePhoto('${p.id}', ${id})" title="Supprimer" style="color:#E24B4A">✕</button>
+        </div>
+      </div>`).join('');
+    galleryHtml = `<div class="gallery-section">
+      <div class="capture-title">📷 Galerie (${animalPhotos.length})</div>
+      <div class="gallery-grid">
+        ${thumbsHtml}
+        <label for="add-gallery-photo-${id}" class="gallery-add-btn" title="Ajouter une photo">➕</label>
+        <input type="file" id="add-gallery-photo-${id}" accept="image/*" onchange="handleAddGalleryPhoto(this, ${id})" style="display:none">
+      </div>
+    </div>`;
+  }
 
   let sightingsListHtml = '';
   if(animalSightings.length){
@@ -971,8 +1048,8 @@ function openModal(id){
             : `<button onclick="startEditNotes(${id})" class="data-btn" style="display:inline-flex;margin-bottom:10px;cursor:pointer">📝 Ajouter une note</button>`
           }
         </div>
-        ${!cap.photo?`<label for="add-photo-file" class="data-btn" style="display:inline-flex;margin-bottom:10px;cursor:pointer">📷 Ajouter une photo</label><input type="file" id="add-photo-file" accept="image/*" onchange="handleEditPhoto(this, ${id})" style="display:none">`:''}
-        <button class="btn-capture" style="background:#378ADD" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
+        ${galleryHtml}
+        <button class="btn-capture" style="background:#378ADD;margin-top:10px" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
         <button class="btn-release" onclick="releaseAnimal(${id})">↩ Réinitialiser cette fiche</button>
         ${sightingsListHtml}
       </div>`
@@ -1015,6 +1092,15 @@ function closeModal(){
   document.getElementById("modal-bg").classList.remove("open");
   currentAnimal = null;
   currentPhoto = null;
+  pendingPhotoFile = null;
+}
+
+function openLightbox(url){
+  const bg = document.createElement('div');
+  bg.className = 'lightbox-bg';
+  bg.onclick = () => bg.remove();
+  bg.innerHTML = `<img src="${url}" alt="">`;
+  document.body.appendChild(bg);
 }
 
 /* ───────────────────────── CONVERSION PHOTO ─────────────────────────
@@ -1054,34 +1140,301 @@ function fileToJpegDataUrl(file, maxDimension = 1600, quality = 0.85){
   });
 }
 
-function handlePhoto(input){
-  const file = input.files[0];
-  if(!file) return;
-  fileToJpegDataUrl(file).then(jpegDataUrl => {
-    currentPhoto = jpegDataUrl;
-    const prev = document.getElementById("photo-prev");
-    if(prev) prev.innerHTML = `<img src="${currentPhoto}" class="photo-thumb" alt="Aperçu">`;
-  }).catch(err => {
-    console.error('Erreur conversion photo:', err);
-    showToast('⚠️ Cette photo n\'a pas pu être lue (format non supporté par ce navigateur)');
+/* Même conversion que fileToJpegDataUrl, mais renvoie un Blob (nécessaire pour
+   l'upload binaire vers Supabase Storage) plutôt qu'une chaîne base64. */
+function fileToJpegBlob(file, maxDimension = 1600, quality = 0.85){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if(width > maxDimension || height > maxDimension){
+        if(width > height){ height = Math.round(height * maxDimension / width); width = maxDimension; }
+        else { width = Math.round(width * maxDimension / height); height = maxDimension; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => {
+        if(blob) resolve(blob);
+        else reject(new Error('Conversion en JPEG impossible'));
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Image illisible (format non supporté par ce navigateur, ex: HEIC)'));
+    };
+    img.src = objectUrl;
   });
 }
 
-function handleEditPhoto(input, id){
+/* ───────────────────────── GALERIE PHOTO (Supabase Storage) ─────────────────────────
+   Chaque animal peut avoir plusieurs photos, stockées dans le bucket "photos"
+   de Supabase Storage (pas en base64 dans la base de données, pour rester
+   léger et scalable). La table "photos" garde la liste des photos par animal,
+   avec leur URL publique et un indicateur "is_primary" pour la photo
+   affichée sur la vignette de la collection. */
+let photosByAnimalId = {}; // { animalId: [ {id, url, storagePath, isPrimary, createdAt}, ... ] }
+
+function loadPhotosCache(){
+  try { photosByAnimalId = JSON.parse(safeStorage.get('faune_photos_v1', '{}')); } catch(e){ photosByAnimalId = {}; }
+}
+function savePhotosCache(){ safeStorage.set('faune_photos_v1', JSON.stringify(photosByAnimalId)); }
+
+function getPrimaryPhotoUrl(animalId){
+  const list = photosByAnimalId[animalId];
+  if(!list || !list.length) return null;
+  const primary = list.find(p => p.isPrimary) || list[0];
+  return primary.url;
+}
+
+async function uploadPhotoForAnimal(animalId, file){
+  if(!supabaseClient) { showToast('⚠️ Connexion au stockage indisponible'); return null; }
+  setSyncStatus('syncing', 'Envoi de la photo…');
+  try {
+    const blob = await fileToJpegBlob(file);
+    const photoId = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    const storagePath = `animal_${animalId}/${photoId}.jpg`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('photos')
+      .upload(storagePath, blob, { contentType: 'image/jpeg', cacheControl: '3600' });
+    if(uploadError) throw uploadError;
+
+    const { data: urlData } = supabaseClient.storage.from('photos').getPublicUrl(storagePath);
+    const publicUrl = urlData.publicUrl;
+
+    const isFirstPhoto = !(photosByAnimalId[animalId] && photosByAnimalId[animalId].length);
+    const photoRecord = {
+      id: photoId, animalId, storagePath, url: publicUrl,
+      createdAt: Date.now(), isPrimary: isFirstPhoto
+    };
+
+    const { error: dbError } = await supabaseClient.from('photos').insert({
+      id: photoRecord.id, animal_id: animalId, storage_path: storagePath,
+      url: publicUrl, created_at: photoRecord.createdAt, is_primary: isFirstPhoto
+    });
+    if(dbError) throw dbError;
+
+    if(!photosByAnimalId[animalId]) photosByAnimalId[animalId] = [];
+    photosByAnimalId[animalId].push(photoRecord);
+    savePhotosCache();
+    setSyncStatus('ok', 'Synchronisé');
+    return photoRecord;
+  } catch(e){
+    console.error('Erreur upload photo:', e);
+    setSyncStatus('error', 'Erreur d\'envoi');
+    showToast('⚠️ La photo n\'a pas pu être envoyée');
+    return null;
+  }
+}
+
+async function deletePhoto(photoId, animalId){
+  if(!requireEditMode()) return;
+  if(!confirm("Supprimer cette photo ?")) return;
+  const list = photosByAnimalId[animalId] || [];
+  const photo = list.find(p => p.id === photoId);
+  if(!photo) return;
+
+  setSyncStatus('syncing', 'Suppression…');
+  try {
+    await supabaseClient.storage.from('photos').remove([photo.storagePath]);
+    await supabaseClient.from('photos').delete().eq('id', photoId);
+
+    photosByAnimalId[animalId] = list.filter(p => p.id !== photoId);
+    // Si on supprime la photo principale, on en désigne une autre automatiquement
+    if(photo.isPrimary && photosByAnimalId[animalId].length){
+      photosByAnimalId[animalId][0].isPrimary = true;
+      await supabaseClient.from('photos').update({ is_primary: true }).eq('id', photosByAnimalId[animalId][0].id);
+    }
+    savePhotosCache();
+    setSyncStatus('ok', 'Synchronisé');
+    render();
+    openModal(animalId);
+  } catch(e){
+    console.error('Erreur suppression photo:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+    showToast('⚠️ La suppression a échoué');
+  }
+}
+
+async function setPrimaryPhoto(photoId, animalId){
+  if(!requireEditMode()) return;
+  const list = photosByAnimalId[animalId] || [];
+  setSyncStatus('syncing', 'Mise à jour…');
+  try {
+    await supabaseClient.from('photos').update({ is_primary: false }).eq('animal_id', animalId);
+    await supabaseClient.from('photos').update({ is_primary: true }).eq('id', photoId);
+    list.forEach(p => p.isPrimary = (p.id === photoId));
+    savePhotosCache();
+    setSyncStatus('ok', 'Synchronisé');
+    render();
+    openModal(animalId);
+  } catch(e){
+    console.error('Erreur mise à jour photo principale:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+async function loadPhotosFromSupabase(){
+  if(!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient.from('photos').select('*').order('created_at', { ascending: true });
+    if(error) throw error;
+    const grouped = {};
+    (data || []).forEach(row => {
+      if(!grouped[row.animal_id]) grouped[row.animal_id] = [];
+      grouped[row.animal_id].push({
+        id: row.id, animalId: row.animal_id, storagePath: row.storage_path,
+        url: row.url, createdAt: row.created_at, isPrimary: row.is_primary
+      });
+    });
+    photosByAnimalId = grouped;
+    savePhotosCache();
+    render();
+    if(document.getElementById('view-gallery')?.classList.contains('active')) renderGalleryWall();
+  } catch(e){
+    console.error('Erreur chargement galerie:', e);
+  }
+}
+
+function populateGalleryFilter(){
+  const sel = document.getElementById('gallery-filter-species');
+  if(!sel) return;
+  const usedAnimalIds = Object.keys(photosByAnimalId).filter(id => photosByAnimalId[id]?.length).map(Number);
+  const usedAnimals = ANIMALS.filter(a => usedAnimalIds.includes(a.id)).sort((a,b) => a.name.localeCompare(b.name));
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="all">Toutes les espèces</option>' +
+    usedAnimals.map(a => `<option value="${a.id}">${a.emoji} ${a.name}</option>`).join('');
+  if(usedAnimalIds.includes(Number(currentVal))) sel.value = currentVal;
+}
+
+function renderGalleryWall(){
+  populateGalleryFilter();
+  const wall = document.getElementById('gallery-wall');
+  const filterSel = document.getElementById('gallery-filter-species');
+  const filterVal = filterSel?.value || 'all';
+
+  let allPhotos = [];
+  Object.keys(photosByAnimalId).forEach(animalIdStr => {
+    const animalId = Number(animalIdStr);
+    if(filterVal !== 'all' && String(animalId) !== filterVal) return;
+    const animal = ANIMALS.find(a => a.id === animalId);
+    if(!animal) return;
+    (photosByAnimalId[animalId] || []).forEach(p => allPhotos.push({ ...p, animalName: animal.name, animalEmoji: animal.emoji }));
+  });
+  allPhotos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  const countEl = document.getElementById('gallery-count');
+  if(countEl) countEl.textContent = `${allPhotos.length} photo${allPhotos.length>1?'s':''}`;
+
+  if(!allPhotos.length){
+    wall.innerHTML = '<div class="empty"><span class="empty-icon">🖼️</span>Aucune photo pour le moment</div>';
+    return;
+  }
+  wall.innerHTML = allPhotos.map(p => `
+    <div class="gallery-wall-item" onclick="openLightbox('${p.url}')">
+      <img src="${p.url}" alt="${p.animalName}" loading="lazy">
+      <div class="gallery-wall-caption">${p.animalEmoji} ${p.animalName}</div>
+    </div>`).join('');
+}
+
+document.getElementById('gallery-filter-species')?.addEventListener('change', renderGalleryWall);
+
+/* ───────────────────────── MIGRATION DES ANCIENNES PHOTOS ─────────────────────────
+   Avant la galerie, chaque capture stockait une seule photo en base64 dans
+   la colonne "captures.photo". On migre automatiquement ces photos vers le
+   nouveau système (Supabase Storage + table "photos") au premier chargement,
+   pour qu'elles apparaissent dans la galerie sans rien perdre. */
+async function migrateLegacyPhotosIfNeeded(){
+  const migrationDone = safeStorage.get('faune_photo_migration_v1_done', null);
+  if(migrationDone === 'true') return;
+  if(!supabaseClient) return; // on retentera au prochain chargement avec connexion
+
+  const animalIdsWithLegacyPhoto = Object.keys(captures).filter(id => captures[id]?.photo && captures[id].photo.startsWith('data:'));
+  if(!animalIdsWithLegacyPhoto.length){
+    safeStorage.set('faune_photo_migration_v1_done', 'true');
+    return;
+  }
+
+  showToast(`⏳ Migration de ${animalIdsWithLegacyPhoto.length} photo(s) vers la galerie…`);
+  let allSucceeded = true;
+  for(const animalIdStr of animalIdsWithLegacyPhoto){
+    const animalId = Number(animalIdStr);
+    try {
+      const dataUrl = captures[animalId].photo;
+      const blob = await (await fetch(dataUrl)).blob();
+      const photoId = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      const storagePath = `animal_${animalId}/${photoId}.jpg`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from('photos')
+        .upload(storagePath, blob, { contentType: 'image/jpeg', cacheControl: '3600' });
+      if(uploadError) throw uploadError;
+
+      const { data: urlData } = supabaseClient.storage.from('photos').getPublicUrl(storagePath);
+
+      const { error: insertError } = await supabaseClient.from('photos').insert({
+        id: photoId, animal_id: animalId, storage_path: storagePath,
+        url: urlData.publicUrl, created_at: Date.now(), is_primary: true
+      });
+      if(insertError) throw insertError;
+
+      if(!photosByAnimalId[animalId]) photosByAnimalId[animalId] = [];
+      photosByAnimalId[animalId].push({
+        id: photoId, animalId, storagePath, url: urlData.publicUrl, createdAt: Date.now(), isPrimary: true
+      });
+
+      // Photo migrée avec succès : on retire l'ancien champ base64 pour ne pas la re-migrer
+      delete captures[animalId].photo;
+    } catch(e){
+      console.error('Erreur migration photo animal', animalId, e);
+      allSucceeded = false;
+      // On continue avec les autres photos même si celle-ci échoue ; elle sera retentée au prochain chargement
+    }
+  }
+  savePhotosCache();
+  save(); // persiste la suppression des champs photo migrés avec succès
+  if(allSucceeded){
+    safeStorage.set('faune_photo_migration_v1_done', 'true');
+  } else {
+    showToast('⚠️ Certaines photos n\'ont pas pu être migrées — nouvelle tentative au prochain chargement');
+  }
+  render();
+  showToast('✅ Migration des photos terminée');
+}
+
+let pendingPhotoFile = null; // fichier brut en attente, uploadé une fois la capture confirmée
+
+function handlePhoto(input){
+  const file = input.files[0];
+  if(!file) return;
+  pendingPhotoFile = file;
+  // Aperçu local immédiat (avant upload, pour un retour visuel instantané)
+  fileToJpegDataUrl(file).then(jpegDataUrl => {
+    const prev = document.getElementById("photo-prev");
+    if(prev) prev.innerHTML = `<img src="${jpegDataUrl}" class="photo-thumb" alt="Aperçu">`;
+  }).catch(err => {
+    console.error('Erreur aperçu photo:', err);
+    showToast('⚠️ Cette photo n\'a pas pu être lue (format non supporté par ce navigateur)');
+    pendingPhotoFile = null;
+  });
+}
+
+function handleAddGalleryPhoto(input, id){
   if(!requireEditMode()) { input.value=''; return; }
   const file = input.files[0];
   if(!file) return;
-  fileToJpegDataUrl(file).then(jpegDataUrl => {
-    if(!captures[id]) return;
-    captures[id].photo = jpegDataUrl; // seule la photo change, le reste de la fiche est intact
-    save();
-    pushCaptureToSupabase(id);
-    render();
-    openModal(id); // recharge la fiche pour afficher la nouvelle photo
-    showToast('✅ Photo mise à jour');
-  }).catch(err => {
-    console.error('Erreur conversion photo:', err);
-    showToast('⚠️ Cette photo n\'a pas pu être lue (format non supporté par ce navigateur)');
+  uploadPhotoForAnimal(id, file).then(photoRecord => {
+    input.value = '';
+    if(photoRecord){
+      render();
+      openModal(id);
+      showToast('✅ Photo ajoutée à la galerie');
+    }
   });
 }
 
@@ -1118,11 +1471,17 @@ function captureAnimal(id){
   const timeStr = document.getElementById("cap-time")?.value || "";
   const lieu = document.getElementById("cap-lieu")?.value || "";
   const notes = document.getElementById("cap-notes")?.value || "";
-  captures[id] = { date: dateStr, time: timeStr, lieu, notes, photo: currentPhoto || null, capturedAt: Date.now() };
+  captures[id] = { date: dateStr, time: timeStr, lieu, notes, capturedAt: Date.now() };
   save();
   pushCaptureToSupabase(id);
+  // On capture la référence AVANT de fermer la modal, car closeModal() réinitialise pendingPhotoFile
+  const fileToUpload = pendingPhotoFile;
   closeModal();
   render();
+  // Si une photo a été choisie au moment de la capture, on l'envoie à la galerie
+  if(fileToUpload){
+    uploadPhotoForAnimal(id, fileToUpload).then(() => { render(); });
+  }
   // Propose de placer le point de capture sur la carte
   pendingSighting = { animalId: id, kind: 'capture', date: dateStr, time: timeStr, lieu, notes };
   goToMapForPlacing();
@@ -1226,6 +1585,7 @@ function switchView(viewName){
   document.getElementById("view-grid").classList.toggle("active", viewName === "grid");
   document.getElementById("view-season").classList.toggle("active", viewName === "season");
   document.getElementById("view-map").classList.toggle("active", viewName === "map");
+  document.getElementById("view-gallery").classList.toggle("active", viewName === "gallery");
   if(viewName === "map"){
     setTimeout(() => {
       const activeSub = document.querySelector(".map-subtab.active")?.dataset.submap || "observations";
@@ -1235,6 +1595,9 @@ function switchView(viewName){
   }
   if(viewName === "season"){
     renderSeasonSection();
+  }
+  if(viewName === "gallery"){
+    renderGalleryWall();
   }
 }
 
@@ -1751,6 +2114,7 @@ async function loadFromSupabase(){
     setSyncStatus('ok', 'Synchronisé');
     render();
     renderMapMarkers();
+    migrateLegacyPhotosIfNeeded();
   } catch(e){
     console.error('Erreur chargement Supabase:', e);
     setSyncStatus('error', 'Erreur de connexion — données locales affichées');
@@ -1938,11 +2302,13 @@ updateLockButton();
 populateSeasonMonthSelect();
 updateSeasonTodayButtonVisibility();
 loadZones();
+loadPhotosCache();
 render();
 initMap();
 initZoneMap();
 loadFromSupabase();
 loadZonesFromSupabase();
+loadPhotosFromSupabase();
 </script>
 </body>
 </html>
