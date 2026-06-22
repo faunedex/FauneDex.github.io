@@ -262,6 +262,7 @@
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
   .legend-dot.green { background: #1D9E75; }
   .legend-dot.blue { background: #378ADD; }
+  .legend-dot.zone-gray { background: #9E9E9E; }
   .legend-dot.zone-green { background: #4CAF50; }
   .legend-dot.zone-orange { background: #F5A623; }
   .legend-dot.zone-red { background: #E0453E; }
@@ -301,7 +302,8 @@
   .zone-color-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
   .zone-color-btn {
     width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; cursor: pointer;
-    transition: all .15s; position: relative;
+    transition: all .15s; position: relative; font-size: 17px; display: flex; align-items: center;
+    justify-content: center; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3));
   }
   .zone-color-btn.selected { border-color: var(--text); transform: scale(1.1); }
   .zone-size-options { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -512,6 +514,7 @@
       <div class="map-wrap">
         <div id="zone-map"></div>
         <div class="map-legend zone-legend">
+          <span><span class="legend-dot zone-gray"></span>Spot à découvrir</span>
           <span><span class="legend-dot zone-green"></span>Spot moyen</span>
           <span><span class="legend-dot zone-orange"></span>Spot intéressant</span>
           <span><span class="legend-dot zone-red"></span>Hot Spot</span>
@@ -1291,11 +1294,12 @@ function initMap(){
    d'intérêt (spots d'observation, zones d'affût) sous forme de cercles
    colorés. Visible par tous, ajout/suppression réservés au mode édition. */
 const ZONE_CATEGORIES = {
-  green:  { label: "Spot moyen",        color: "#4CAF50" },
-  orange: { label: "Spot intéressant",  color: "#F5A623" },
-  red:    { label: "Hot Spot",          color: "#E0453E" },
-  gold:   { label: "Golden Spot",       color: "#D4AF37" },
-  blue:   { label: "Zone d'affût",      color: "#3B82C4" }
+  gray:   { label: "Spot à découvrir",  color: "#9E9E9E", icon: "❓" },
+  green:  { label: "Spot moyen",        color: "#4CAF50", icon: "🐾" },
+  orange: { label: "Spot intéressant",  color: "#F5A623", icon: "🐾" },
+  red:    { label: "Hot Spot",          color: "#E0453E", icon: "🐾" },
+  gold:   { label: "Golden Spot",       color: "#D4AF37", icon: "🐾" },
+  blue:   { label: "Zone d'affût",      color: "#3B82C4", icon: "🔭" }
 };
 const ZONE_SIZES = { petit: 60, moyen: 130, grand: 220 }; // rayon en mètres
 
@@ -1394,7 +1398,7 @@ function startAddZone(){
       <div class="capture-title">Catégorie</div>
       <div class="zone-color-options" id="zone-color-options">
         ${Object.entries(ZONE_CATEGORIES).map(([key, c]) => `
-          <button type="button" class="zone-color-btn" data-category="${key}" style="background:${c.color}" title="${c.label}" onclick="selectZoneCategory('${key}')"></button>
+          <button type="button" class="zone-color-btn" data-category="${key}" style="background:${c.color}" title="${c.label}" onclick="selectZoneCategory('${key}')">${c.icon}</button>
         `).join('')}
       </div>
       <div class="capture-title">Taille</div>
@@ -1484,11 +1488,26 @@ function renderZoneMarkers(){
     const deleteBtn = isEditUnlocked()
       ? `<button onclick="deleteZone('${zone.id}')" style="border:none;background:#E24B4A;color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;margin-top:6px">Supprimer</button>`
       : '';
-    circle.bindPopup(`
-      <div class="popup-pin-title">${cat.label}</div>
+    const popupHtml = `
+      <div class="popup-pin-title">${cat.icon} ${cat.label}</div>
       ${zone.name ? `<div class="popup-pin-meta">${zone.name}</div>` : ''}
       ${deleteBtn}
-    `);
+    `;
+    circle.bindPopup(popupHtml);
+
+    // Icône emoji centrée sur la zone, taille fixe en pixels (indépendante du zoom)
+    const iconMarker = L.marker([zone.lat, zone.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="font-size:22px;line-height:1;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">${cat.icon}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      }),
+      interactive: true,
+      keyboard: false
+    }).addTo(zonesLayer);
+    iconMarker.bindPopup(popupHtml);
+
     circlesByZoneId[zone.id] = circle;
   });
 }
