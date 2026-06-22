@@ -262,6 +262,55 @@
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: -1px; }
   .legend-dot.green { background: #1D9E75; }
   .legend-dot.blue { background: #378ADD; }
+  .legend-dot.zone-green { background: #4CAF50; }
+  .legend-dot.zone-orange { background: #F5A623; }
+  .legend-dot.zone-red { background: #E0453E; }
+  .legend-dot.zone-gold { background: #D4AF37; }
+  .legend-dot.zone-blue { background: #3B82C4; }
+
+  /* SOUS-ONGLETS CARTES */
+  .map-subtabs { display: flex; gap: 6px; margin-bottom: 1rem; background: var(--bg); border-radius: 24px; padding: 4px; width: fit-content; }
+  .map-subtab {
+    padding: 6px 16px; border-radius: 20px; border: none; background: transparent;
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: all .15s;
+  }
+  .map-subtab:hover { color: var(--text); }
+  .map-subtab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .map-subview { display: none; }
+  .map-subview.active { display: block; }
+
+  /* ZONES */
+  .zone-toolbar { margin-bottom: 12px; }
+  .zone-add-btn {
+    padding: 7px 16px; border-radius: 20px; border: none; background: var(--green);
+    color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s;
+  }
+  .zone-add-btn:hover { background: var(--green-dark); }
+  .zone-banner {
+    background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 13px; margin-bottom: 12px; display: none; align-items: center;
+    justify-content: space-between; gap: 10px;
+  }
+  [data-theme="dark"] .zone-banner { color: #5dcaa5; }
+  .zone-banner.show { display: flex; }
+  .zone-banner button {
+    border: none; background: var(--green); color: #fff; border-radius: 16px;
+    padding: 4px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
+  }
+  .zone-form-section { padding: 0; }
+  .zone-color-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .zone-color-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent; cursor: pointer;
+    transition: all .15s; position: relative;
+  }
+  .zone-color-btn.selected { border-color: var(--text); transform: scale(1.1); }
+  .zone-size-options { display: flex; gap: 8px; margin-bottom: 12px; }
+  .zone-size-btn {
+    flex: 1; padding: 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong);
+    background: var(--bg); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all .15s;
+  }
+  .zone-size-btn.selected { background: var(--green); color: #fff; border-color: var(--green); }
+  #zone-map { width: 100%; height: 480px; background: var(--bg); }
   .map-hint { font-size: 12px; color: var(--text-hint); margin-top: 10px; text-align: center; }
   .map-banner {
     background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-sm);
@@ -277,6 +326,8 @@
   .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border-radius: 8px; }
   .leaflet-popup-tip { background: var(--surface); }
   .popup-pin-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .popup-pin-link { cursor: pointer; text-decoration: underline; text-decoration-color: rgba(0,0,0,0.2); text-underline-offset: 2px; }
+  .popup-pin-link:hover { color: #1D9E75; }
   .popup-pin-meta { font-size: 11px; color: var(--text-muted); }
 
   /* DATA TOOLS (export/import) */
@@ -346,6 +397,7 @@
     .view-tab { padding: 6px 10px; font-size: 12px; flex: 1; text-align: center; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
     #map { height: 380px; }
+    #zone-map { height: 380px; }
     .map-filters { flex-direction: column; align-items: stretch; }
     .map-filters select, .map-filters input[type="month"] { width: 100%; }
     .map-count { margin-left: 0; text-align: right; }
@@ -382,7 +434,7 @@
   <div class="view-tabs">
     <button class="view-tab active" data-view="grid">📋 Collection</button>
     <button class="view-tab" data-view="season">☀️ Saisons</button>
-    <button class="view-tab" data-view="map">🗺️ Carte des observations</button>
+    <button class="view-tab" data-view="map">🗺️ Cartes</button>
   </div>
 
   <div class="view active" id="view-grid">
@@ -409,38 +461,66 @@
   </div>
 
   <div class="view" id="view-map">
-    <div class="map-banner" id="map-banner">
-      <span id="map-banner-text"></span>
-      <button onclick="cancelPlacing()">Annuler</button>
+    <div class="map-subtabs">
+      <button class="map-subtab active" data-submap="observations">📍 Carte d'observation</button>
+      <button class="map-subtab" data-submap="zones">🎯 Zones</button>
     </div>
-    <div class="map-filters">
-      <select id="map-filter-type" aria-label="Filtrer par groupe">
-        <option value="all">Tous les groupes</option>
-        <option value="Mammifère">Mammifères</option>
-        <option value="Oiseau">Oiseaux</option>
-        <option value="Reptile">Reptiles</option>
-        <option value="Amphibien">Amphibiens</option>
-      </select>
-      <select id="map-filter-species" aria-label="Filtrer par espèce">
-        <option value="all">Toutes les espèces</option>
-      </select>
-      <select id="map-filter-kind" aria-label="Filtrer par type de point">
-        <option value="all">Capture + Observation</option>
-        <option value="capture">Capture seulement</option>
-        <option value="observation">Observation seulement</option>
-      </select>
-      <input type="month" id="map-filter-month" aria-label="Filtrer par mois" />
-      <button class="map-filter-clear" onclick="clearMapFilters()">Réinitialiser</button>
-      <span class="map-count" id="map-count"></span>
-    </div>
-    <div class="map-wrap">
-      <div id="map"></div>
-      <div class="map-legend">
-        <span><span class="legend-dot green"></span>Capture (1ère observation)</span>
-        <span><span class="legend-dot blue"></span>Observation (revue)</span>
+
+    <div class="map-subview active" id="submap-observations">
+      <div class="map-banner" id="map-banner">
+        <span id="map-banner-text"></span>
+        <button onclick="cancelPlacing()">Annuler</button>
       </div>
+      <div class="map-filters">
+        <select id="map-filter-type" aria-label="Filtrer par groupe">
+          <option value="all">Tous les groupes</option>
+          <option value="Mammifère">Mammifères</option>
+          <option value="Oiseau">Oiseaux</option>
+          <option value="Reptile">Reptiles</option>
+          <option value="Amphibien">Amphibiens</option>
+        </select>
+        <select id="map-filter-species" aria-label="Filtrer par espèce">
+          <option value="all">Toutes les espèces</option>
+        </select>
+        <select id="map-filter-kind" aria-label="Filtrer par type de point">
+          <option value="all">Capture + Observation</option>
+          <option value="capture">Capture seulement</option>
+          <option value="observation">Observation seulement</option>
+        </select>
+        <input type="month" id="map-filter-month" aria-label="Filtrer par mois" />
+        <button class="map-filter-clear" onclick="clearMapFilters()">Réinitialiser</button>
+        <span class="map-count" id="map-count"></span>
+      </div>
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-legend">
+          <span><span class="legend-dot green"></span>Capture (1ère observation)</span>
+          <span><span class="legend-dot blue"></span>Observation (revue)</span>
+        </div>
+      </div>
+      <div class="map-hint">Pour ajouter un point : ouvre une fiche animal et clique sur « 📍 Placer sur la carte ».</div>
     </div>
-    <div class="map-hint">Pour ajouter un point : ouvre une fiche animal et clique sur « 📍 Placer sur la carte ».</div>
+
+    <div class="map-subview" id="submap-zones">
+      <div class="zone-banner" id="zone-banner">
+        <span id="zone-banner-text"></span>
+        <button onclick="cancelZonePlacing()">Annuler</button>
+      </div>
+      <div class="zone-toolbar">
+        <button class="zone-add-btn" onclick="startAddZone()">➕ Ajouter une zone</button>
+      </div>
+      <div class="map-wrap">
+        <div id="zone-map"></div>
+        <div class="map-legend zone-legend">
+          <span><span class="legend-dot zone-green"></span>Spot moyen</span>
+          <span><span class="legend-dot zone-orange"></span>Spot intéressant</span>
+          <span><span class="legend-dot zone-red"></span>Hot Spot</span>
+          <span><span class="legend-dot zone-gold"></span>Golden Spot</span>
+          <span><span class="legend-dot zone-blue"></span>Zone d'affût</span>
+        </div>
+      </div>
+      <div class="map-hint">Clique sur « ➕ Ajouter une zone », choisis sa catégorie et sa taille, puis place-la sur la carte.</div>
+    </div>
   </div>
 </main>
 
@@ -1146,12 +1226,30 @@ function switchView(viewName){
   document.getElementById("view-season").classList.toggle("active", viewName === "season");
   document.getElementById("view-map").classList.toggle("active", viewName === "map");
   if(viewName === "map"){
-    setTimeout(() => { if(map) map.invalidateSize(); }, 50);
+    setTimeout(() => {
+      const activeSub = document.querySelector(".map-subtab.active")?.dataset.submap || "observations";
+      if(activeSub === "observations" && map) map.invalidateSize();
+      if(activeSub === "zones" && zoneMap) zoneMap.invalidateSize();
+    }, 50);
   }
   if(viewName === "season"){
     renderSeasonSection();
   }
 }
+
+function switchMapSubview(subview){
+  document.querySelectorAll(".map-subtab").forEach(t => t.classList.toggle("active", t.dataset.submap === subview));
+  document.getElementById("submap-observations").classList.toggle("active", subview === "observations");
+  document.getElementById("submap-zones").classList.toggle("active", subview === "zones");
+  setTimeout(() => {
+    if(subview === "observations" && map) map.invalidateSize();
+    if(subview === "zones" && zoneMap) zoneMap.invalidateSize();
+  }, 50);
+}
+
+document.querySelectorAll(".map-subtab").forEach(tab => {
+  tab.addEventListener("click", () => switchMapSubview(tab.dataset.submap));
+});
 
 /* ───────────────────────── MAP ───────────────────────── */
 let map = null;
@@ -1188,8 +1286,226 @@ function initMap(){
   }
 }
 
+/* ───────────────────────── ZONES ─────────────────────────
+   Carte indépendante (mêmes tuiles, même village) pour marquer des zones
+   d'intérêt (spots d'observation, zones d'affût) sous forme de cercles
+   colorés. Visible par tous, ajout/suppression réservés au mode édition. */
+const ZONE_CATEGORIES = {
+  green:  { label: "Spot moyen",        color: "#4CAF50" },
+  orange: { label: "Spot intéressant",  color: "#F5A623" },
+  red:    { label: "Hot Spot",          color: "#E0453E" },
+  gold:   { label: "Golden Spot",       color: "#D4AF37" },
+  blue:   { label: "Zone d'affût",      color: "#3B82C4" }
+};
+const ZONE_SIZES = { petit: 60, moyen: 130, grand: 220 }; // rayon en mètres
+
+let zoneMap = null;
+let zonesLayer = null;
+let zones = [];
+let pendingZone = null; // {category, size, name}
+let circlesByZoneId = {};
+
+function loadZones(){
+  try { zones = JSON.parse(safeStorage.get('faune_zones_v1', '[]')); } catch(e){ zones = []; }
+}
+function saveZonesLocal(){ safeStorage.set('faune_zones_v1', JSON.stringify(zones)); }
+
+async function pushZoneToSupabase(zone){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
+  setSyncStatus('syncing', 'Synchronisation…');
+  try {
+    const { error } = await supabaseClient.from('zones').upsert({
+      id: zone.id, name: zone.name || null, category: zone.category,
+      size: zone.size, lat: zone.lat, lng: zone.lng
+    });
+    if(error) throw error;
+    setSyncStatus('ok', 'Synchronisé');
+  } catch(e){
+    console.error('Erreur sync zone:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+async function deleteZoneFromSupabase(zoneId){
+  if(!supabaseClient) { setSyncStatus('error', 'Hors-ligne'); return; }
+  setSyncStatus('syncing', 'Synchronisation…');
+  try {
+    const { error } = await supabaseClient.from('zones').delete().eq('id', zoneId);
+    if(error) throw error;
+    setSyncStatus('ok', 'Synchronisé');
+  } catch(e){
+    console.error('Erreur suppression zone:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+  }
+}
+
+async function loadZonesFromSupabase(){
+  if(!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient.from('zones').select('*');
+    if(error) throw error;
+    zones = (data || []).map(row => ({
+      id: row.id, name: row.name, category: row.category, size: row.size, lat: row.lat, lng: row.lng
+    }));
+    saveZonesLocal();
+    renderZoneMarkers();
+  } catch(e){
+    console.error('Erreur chargement zones:', e);
+  }
+}
+
+function initZoneMap(){
+  if(typeof L === 'undefined'){
+    const mapEl = document.getElementById('zone-map');
+    if(mapEl) mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;color:var(--text-muted);font-size:13px">🗺️ La carte nécessite une connexion internet pour charger le fond de carte.<br>Réessaie avec une connexion active.</div>';
+    return;
+  }
+  try {
+    zoneMap = L.map('zone-map', { scrollWheelZoom: true }).setView(VILLAGE_COORDS, 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 19
+    }).addTo(zoneMap);
+    L.marker(VILLAGE_COORDS, {
+      icon: L.divIcon({ className: '', html: '<div style="font-size:22px">🏠</div>', iconSize:[22,22], iconAnchor:[11,11] })
+    }).addTo(zoneMap).bindPopup("Marigny-le-Cahouët");
+
+    zonesLayer = L.layerGroup().addTo(zoneMap);
+
+    zoneMap.on('click', (e) => {
+      if(!pendingZone) return;
+      placePendingZoneAt(e.latlng.lat, e.latlng.lng);
+    });
+
+    renderZoneMarkers();
+  } catch(e){
+    console.error('Erreur init carte zones:', e);
+  }
+}
+
+function startAddZone(){
+  if(!requireEditMode()) return;
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-head">
+      <div><div class="modal-name">🎯 Nouvelle zone</div></div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="zone-form-section">
+      <div class="capture-title">Catégorie</div>
+      <div class="zone-color-options" id="zone-color-options">
+        ${Object.entries(ZONE_CATEGORIES).map(([key, c]) => `
+          <button type="button" class="zone-color-btn" data-category="${key}" style="background:${c.color}" title="${c.label}" onclick="selectZoneCategory('${key}')"></button>
+        `).join('')}
+      </div>
+      <div class="capture-title">Taille</div>
+      <div class="zone-size-options" id="zone-size-options">
+        <button type="button" class="zone-size-btn" data-size="petit" onclick="selectZoneSize('petit')">Petit</button>
+        <button type="button" class="zone-size-btn" data-size="moyen" onclick="selectZoneSize('moyen')">Moyen</button>
+        <button type="button" class="zone-size-btn" data-size="grand" onclick="selectZoneSize('grand')">Grand</button>
+      </div>
+      <input type="text" id="zone-name-input" placeholder="Nom ou description (optionnel)" class="notes-input">
+      <button class="btn-capture" onclick="confirmAddZone()">📍 Placer sur la carte</button>
+    </div>`;
+  document.getElementById("modal-bg").classList.add("open");
+  pendingZoneDraft = { category: null, size: 'moyen' };
+  // Présélection taille moyenne par défaut
+  setTimeout(() => {
+    document.querySelector('.zone-size-btn[data-size="moyen"]')?.classList.add('selected');
+  }, 0);
+}
+
+let pendingZoneDraft = { category: null, size: 'moyen' };
+
+function selectZoneCategory(key){
+  pendingZoneDraft.category = key;
+  document.querySelectorAll('.zone-color-btn').forEach(b => b.classList.toggle('selected', b.dataset.category === key));
+}
+
+function selectZoneSize(size){
+  pendingZoneDraft.size = size;
+  document.querySelectorAll('.zone-size-btn').forEach(b => b.classList.toggle('selected', b.dataset.size === size));
+}
+
+function confirmAddZone(){
+  if(!pendingZoneDraft.category){
+    showToast('⚠️ Choisis une catégorie de zone');
+    return;
+  }
+  const name = document.getElementById('zone-name-input')?.value || '';
+  pendingZone = { category: pendingZoneDraft.category, size: pendingZoneDraft.size, name };
+  closeModal();
+  switchView('map');
+  switchMapSubview('zones');
+  const banner = document.getElementById('zone-banner');
+  const text = document.getElementById('zone-banner-text');
+  text.textContent = `📍 Clique sur la carte pour placer cette zone${name ? ' : ' + name : ''}`;
+  banner.classList.add('show');
+  if(zoneMap) zoneMap.getContainer().style.cursor = 'crosshair';
+}
+
+function cancelZonePlacing(){
+  pendingZone = null;
+  document.getElementById('zone-banner').classList.remove('show');
+  if(zoneMap) zoneMap.getContainer().style.cursor = '';
+}
+
+function placePendingZoneAt(lat, lng){
+  const zone = {
+    id: 'zone_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name: pendingZone.name,
+    category: pendingZone.category,
+    size: pendingZone.size,
+    lat, lng
+  };
+  zones.push(zone);
+  saveZonesLocal();
+  pushZoneToSupabase(zone);
+  cancelZonePlacing();
+  renderZoneMarkers();
+  showToast('✅ Zone ajoutée');
+}
+
+function renderZoneMarkers(){
+  if(!zonesLayer) return;
+  zonesLayer.clearLayers();
+  circlesByZoneId = {};
+  zones.forEach(zone => {
+    const cat = ZONE_CATEGORIES[zone.category];
+    if(!cat) return;
+    const radius = ZONE_SIZES[zone.size] || ZONE_SIZES.moyen;
+    const circle = L.circle([zone.lat, zone.lng], {
+      radius,
+      color: cat.color,
+      fillColor: cat.color,
+      fillOpacity: 0.28,
+      weight: 2,
+      opacity: 0.75
+    }).addTo(zonesLayer);
+    const deleteBtn = isEditUnlocked()
+      ? `<button onclick="deleteZone('${zone.id}')" style="border:none;background:#E24B4A;color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;cursor:pointer;margin-top:6px">Supprimer</button>`
+      : '';
+    circle.bindPopup(`
+      <div class="popup-pin-title">${cat.label}</div>
+      ${zone.name ? `<div class="popup-pin-meta">${zone.name}</div>` : ''}
+      ${deleteBtn}
+    `);
+    circlesByZoneId[zone.id] = circle;
+  });
+}
+
+function deleteZone(zoneId){
+  if(!requireEditMode()) return;
+  if(!confirm("Supprimer cette zone ?")) return;
+  zones = zones.filter(z => z.id !== zoneId);
+  saveZonesLocal();
+  deleteZoneFromSupabase(zoneId);
+  if(zoneMap) zoneMap.closePopup();
+  renderZoneMarkers();
+}
+
 function goToMapForPlacing(){
   switchView('map');
+  switchMapSubview('observations');
   const banner = document.getElementById('map-banner');
   const text = document.getElementById('map-banner-text');
   const animal = ANIMALS.find(a => a.id === pendingSighting.animalId);
@@ -1291,7 +1607,7 @@ function renderMapMarkers(){
     });
     const marker = L.marker([s.lat, s.lng], { icon }).addTo(markersLayer);
     marker.bindPopup(`
-      <div class="popup-pin-title">${animal.emoji} ${animal.name}</div>
+      <div class="popup-pin-title popup-pin-link" onclick="goToAnimalFromMap(${animal.id})" title="Voir la fiche">${animal.emoji} ${animal.name}</div>
       <div class="popup-pin-meta">${s.kind === 'capture' ? '🟢 Capture' : '🔵 Observation'} — ${s.date}${s.time?` ${s.time}`:''}${s.lieu ? ' — '+s.lieu : ''}</div>
     `);
     markersBySightingId[s.id] = marker;
@@ -1300,11 +1616,17 @@ function renderMapMarkers(){
   if(countEl) countEl.textContent = `${shown} / ${sightings.length} point${sightings.length>1?'s':''} affiché${shown>1?'s':''}`;
 }
 
+function goToAnimalFromMap(animalId){
+  if(map) map.closePopup();
+  openModal(animalId);
+}
+
 function goToSightingOnMap(sightingId){
   const sighting = sightings.find(s => s.id === sightingId);
   if(!sighting){ showToast('⚠️ Ce point n\'est plus disponible'); return; }
   closeModal();
   switchView('map');
+  switchMapSubview('observations');
   setTimeout(() => {
     if(map) map.invalidateSize();
     const marker = markersBySightingId[sightingId];
@@ -1427,6 +1749,7 @@ function updateLockButton(){
     btn.textContent = '🔒 Lecture seule';
     btn.classList.remove('unlocked');
   }
+  renderZoneMarkers(); // les popups de zones affichent ou masquent le bouton Supprimer selon le mode
 }
 
 function onLockButtonClick(){
@@ -1582,9 +1905,12 @@ editModeUnlocked = safeStorage.get('faune_edit_unlocked', 'false') === 'true';
 updateLockButton();
 populateSeasonMonthSelect();
 updateSeasonTodayButtonVisibility();
+loadZones();
 render();
 initMap();
+initZoneMap();
 loadFromSupabase();
+loadZonesFromSupabase();
 </script>
 </body>
 </html>
