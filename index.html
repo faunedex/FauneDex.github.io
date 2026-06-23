@@ -59,6 +59,8 @@
   .progress-wrap { max-width: 940px; margin: 0 auto; padding: 0.75rem 1.5rem 0; }
   .progress-bar { height: 4px; background: var(--progress-bg); border-radius: 2px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width .4s ease; }
+  .last-export-label { font-size: 11px; color: var(--text-hint); margin-top: 6px; }
+  .last-export-label.stale { color: #C9882B; }
 
   /* MAIN */
   .main { max-width: 940px; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
@@ -469,7 +471,7 @@
       <div class="data-tools">
         <button class="data-btn" onclick="exportData()">⬇️ Exporter</button>
         <button class="data-btn" onclick="document.getElementById('import-file-input').click()">⬆️ Importer</button>
-        <input type="file" id="import-file-input" accept="application/json" onchange="importData(this)" />
+        <input type="file" id="import-file-input" accept=".zip,.json,application/json,application/zip" onchange="importData(this)" />
       </div>
       <button class="lock-btn" id="lock-btn" onclick="onLockButtonClick()">🔒 Lecture seule</button>
       <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Mode sombre</button>
@@ -479,6 +481,7 @@
 
 <div class="progress-wrap">
   <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+  <div class="last-export-label" id="last-export-label"></div>
 </div>
 
 <main class="main">
@@ -594,6 +597,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
 /* ───────────────────────── SUPABASE ─────────────────────────
    FauneDex est maintenant connecté à une base partagée : tout le monde
@@ -2487,31 +2491,120 @@ function showToast(msg){
   setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-function exportData(){
-  const payload = {
-    appName: "FauneDex — Côte-d'Or",
-    exportVersion: 1,
-    exportedAt: new Date().toISOString(),
-    captures,
-    sightings
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const dateTag = new Date().toISOString().split('T')[0];
-  a.href = url;
-  a.download = `faune-cote-dor-sauvegarde-${dateTag}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('✅ Sauvegarde téléchargée');
+/* La sauvegarde complète embarque aussi les fichiers photos eux-mêmes (pas
+   juste leurs URLs Supabase) : si la base Supabase devenait un jour
+   inaccessible, ce fichier .zip resterait une copie autonome et utilisable
+   de toute la collection. */
+async function exportData(){
+  if(typeof JSZip === 'undefined'){
+    showToast('⚠️ La sauvegarde nécessite une connexion internet (bibliothèque de compression non chargée)');
+    return;
+  }
+  showToast('⏳ Préparation de la sauvegarde…');
+  try {
+    const zip = new JSZip();
+
+    // Liste plate des photos avec un nom de fichier prévisible pour le zip,
+    // et le chemin associé conservé dans data.json pour la réimportation.
+    const photoEntries = [];
+    Object.keys(photosByAnimalId).forEach(animalId => {
+      (photosByAnimalId[animalId] || []).forEach(p => {
+        const ext = (p.storagePath && p.storagePath.split('.').pop()) || 'jpg';
+        const filename = `${animalId}_${p.id}.${ext}`;
+        photoEntries.push({ ...p, animalId: Number(animalId), zipFilename: filename });
+      });
+    });
+
+    const payload = {
+      appName: "FauneDex — Côte-d'Or",
+      exportVersion: 2, // v2 = sauvegarde complète (captures + sightings + zones + photos)
+      exportedAt: new Date().toISOString(),
+      captures,
+      sightings,
+      zones,
+      photos: photoEntries.map(p => ({
+        id: p.id, animalId: p.animalId, storagePath: p.storagePath,
+        createdAt: p.createdAt, isPrimary: p.isPrimary, zipFilename: p.zipFilename
+      }))
+    };
+    zip.file('data.json', JSON.stringify(payload, null, 2));
+
+    // Téléchargement de chaque photo pour l'intégrer au zip. On continue même
+    // si certaines échouent (ex: photo déjà supprimée côté serveur) : une
+    // sauvegarde partielle vaut mieux que pas de sauvegarde du tout.
+    const photosFolder = zip.folder('photos');
+    let failedCount = 0;
+    for(const p of photoEntries){
+      try {
+        const res = await fetch(p.url);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        photosFolder.file(p.zipFilename, blob);
+      } catch(e){
+        console.error('Erreur téléchargement photo pour sauvegarde:', p.url, e);
+        failedCount++;
+      }
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateTag = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `faune-cote-dor-sauvegarde-${dateTag}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    safeStorage.set('faune_last_export_at', new Date().toISOString());
+    updateLastExportLabel();
+
+    if(failedCount){
+      showToast(`✅ Sauvegarde téléchargée (⚠️ ${failedCount} photo(s) non incluse(s))`);
+    } else {
+      showToast('✅ Sauvegarde complète téléchargée');
+    }
+  } catch(e){
+    console.error('Erreur génération sauvegarde:', e);
+    showToast('⚠️ La sauvegarde a échoué');
+  }
+}
+
+/* Affiche la date du dernier export dans l'interface, pour qu'on n'oublie
+   pas de refaire une sauvegarde de temps en temps. */
+function updateLastExportLabel(){
+  const el = document.getElementById('last-export-label');
+  if(!el) return;
+  const iso = safeStorage.get('faune_last_export_at', null);
+  if(!iso){
+    el.textContent = 'Aucune sauvegarde locale encore faite';
+    el.classList.add('stale');
+    return;
+  }
+  const date = new Date(iso);
+  const daysAgo = Math.floor((Date.now() - date.getTime()) / (1000*60*60*24));
+  const dateLabel = date.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  el.textContent = daysAgo === 0 ? `Dernière sauvegarde : aujourd'hui (${dateLabel})` : `Dernière sauvegarde : ${dateLabel} (il y a ${daysAgo} j)`;
+  el.classList.toggle('stale', daysAgo >= 30);
 }
 
 function importData(input){
   if(!requireEditMode()) { input.value=''; return; }
   const file = input.files[0];
   if(!file) return;
+  const name = (file.name || '').toLowerCase();
+  if(name.endsWith('.zip')){
+    importZipBackup(file, input);
+  } else {
+    importLegacyJson(file, input);
+  }
+}
+
+/* Ancien format (.json) : uniquement captures + sightings, pas de zones ni
+   de photos. Conservé pour pouvoir réimporter une sauvegarde faite avant
+   l'ajout de la sauvegarde complète en .zip. */
+function importLegacyJson(file, input){
   const reader = new FileReader();
   reader.onload = async e => {
     let data;
@@ -2530,7 +2623,7 @@ function importData(input){
     const currentSightCount = sightings.length;
 
     const mode = confirm(
-      `Le fichier contient ${incomingCapCount} capture(s) et ${incomingSightCount} point(s) carte.\n` +
+      `Le fichier contient ${incomingCapCount} capture(s) et ${incomingSightCount} point(s) carte (ancien format, sans zones ni photos).\n` +
       `Tu en as actuellement ${currentCapCount} et ${currentSightCount}.\n\n` +
       `OK = FUSIONNER avec tes données actuelles\nAnnuler = REMPLACER tes données actuelles par celles du fichier`
     );
@@ -2577,6 +2670,145 @@ function importData(input){
   reader.readAsText(file);
 }
 
+/* Nouveau format (.zip) : captures + sightings + zones + photos réelles.
+   Les photos sont ré-uploadées vers Supabase Storage (nouveaux chemins,
+   pour ne jamais entrer en conflit avec d'éventuelles photos déjà
+   présentes), puis réinsérées dans la galerie. */
+async function importZipBackup(file, input){
+  if(typeof JSZip === 'undefined'){
+    showToast('⚠️ La restauration nécessite une connexion internet (bibliothèque de décompression non chargée)');
+    input.value = '';
+    return;
+  }
+  let zip, data;
+  try {
+    zip = await JSZip.loadAsync(file);
+    const dataFile = zip.file('data.json');
+    if(!dataFile) throw new Error('data.json manquant dans le zip');
+    data = JSON.parse(await dataFile.async('string'));
+  } catch(e){
+    console.error('Erreur lecture sauvegarde .zip:', e);
+    showToast('❌ Fichier de sauvegarde invalide ou corrompu');
+    input.value = '';
+    return;
+  }
+
+  if(!data || typeof data.captures !== 'object' || !Array.isArray(data.sightings)){
+    showToast('❌ Format de fichier non reconnu');
+    input.value = '';
+    return;
+  }
+
+  const incomingZones = Array.isArray(data.zones) ? data.zones : [];
+  const incomingPhotos = Array.isArray(data.photos) ? data.photos : [];
+  const incomingCapCount = Object.keys(data.captures).length;
+  const incomingSightCount = data.sightings.length;
+
+  const mode = confirm(
+    `Le fichier contient ${incomingCapCount} capture(s), ${incomingSightCount} point(s) carte, ${incomingZones.length} zone(s) et ${incomingPhotos.length} photo(s).\n` +
+    `Tu as actuellement ${Object.keys(captures).length} capture(s), ${sightings.length} point(s) et ${zones.length} zone(s).\n\n` +
+    `OK = FUSIONNER avec tes données actuelles\nAnnuler = REMPLACER tes données actuelles par celles du fichier`
+  );
+
+  showToast('⏳ Restauration en cours…');
+  setSyncStatus('syncing', 'Restauration…');
+
+  try {
+    if(mode){
+      // Fusion captures
+      Object.keys(data.captures).forEach(id => {
+        if(!captures[id]) captures[id] = data.captures[id];
+      });
+      // Fusion sightings
+      const existingSightingIds = new Set(sightings.map(s => s.id));
+      data.sightings.forEach(s => { if(!existingSightingIds.has(s.id)) sightings.push(s); });
+      // Fusion zones
+      const existingZoneIds = new Set(zones.map(z => z.id));
+      incomingZones.forEach(z => { if(!existingZoneIds.has(z.id)) zones.push(z); });
+    } else {
+      captures = data.captures;
+      sightings = data.sightings;
+      zones = incomingZones;
+    }
+
+    save();
+    saveSightings();
+    saveZonesLocal();
+    render();
+    renderMapMarkers();
+    renderZoneMarkers();
+
+    // Pousse captures, sightings et zones vers la base partagée
+    for(const id of Object.keys(captures)){
+      await pushCaptureToSupabase(Number(id));
+    }
+    for(const s of sightings){
+      await pushSightingToSupabase(s);
+    }
+    for(const z of zones){
+      await pushZoneToSupabase(z);
+    }
+
+    // Restaure les photos : ré-upload du fichier embarqué dans le zip vers
+    // Supabase Storage, sous un nouveau chemin pour éviter tout conflit, puis
+    // recréation de l'entrée dans la table "photos".
+    let restoredPhotos = 0, failedPhotos = 0;
+    for(const p of incomingPhotos){
+      try {
+        // En mode fusion, on ne restaure une photo que si l'animal n'a pas
+        // déjà au moins une photo dans sa galerie actuelle (évite les doublons
+        // si on réimporte la même sauvegarde plusieurs fois).
+        if(mode && photosByAnimalId[p.animalId] && photosByAnimalId[p.animalId].some(existing => existing.id === p.id)) continue;
+
+        const zipEntry = zip.file(`photos/${p.zipFilename}`);
+        if(!zipEntry) { failedPhotos++; continue; }
+        const blob = await zipEntry.async('blob');
+
+        const newPhotoId = 'photo_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+        const ext = (p.storagePath && p.storagePath.split('.').pop()) || 'jpg';
+        const storagePath = `animal_${p.animalId}/${newPhotoId}.${ext}`;
+
+        const { error: uploadError } = await supabaseClient.storage
+          .from('photos')
+          .upload(storagePath, blob, { contentType: blob.type || 'image/jpeg', cacheControl: '3600' });
+        if(uploadError) throw uploadError;
+
+        const { data: urlData } = supabaseClient.storage.from('photos').getPublicUrl(storagePath);
+        const isFirstPhoto = !(photosByAnimalId[p.animalId] && photosByAnimalId[p.animalId].length);
+
+        const { error: dbError } = await supabaseClient.from('photos').insert({
+          id: newPhotoId, animal_id: p.animalId, storage_path: storagePath,
+          url: urlData.publicUrl, created_at: p.createdAt || Date.now(), is_primary: p.isPrimary || isFirstPhoto
+        });
+        if(dbError) throw dbError;
+
+        if(!photosByAnimalId[p.animalId]) photosByAnimalId[p.animalId] = [];
+        photosByAnimalId[p.animalId].push({
+          id: newPhotoId, animalId: p.animalId, storagePath, url: urlData.publicUrl,
+          createdAt: p.createdAt || Date.now(), isPrimary: p.isPrimary || isFirstPhoto
+        });
+        restoredPhotos++;
+      } catch(e){
+        console.error('Erreur restauration photo:', p, e);
+        failedPhotos++;
+      }
+    }
+    savePhotosCache();
+    render();
+
+    setSyncStatus('ok', 'Synchronisé');
+    showToast(failedPhotos
+      ? `✅ Restauration terminée (${restoredPhotos} photo(s) restaurée(s), ⚠️ ${failedPhotos} échec(s))`
+      : `✅ ${mode ? 'Données fusionnées' : 'Données remplacées'} et synchronisées (${restoredPhotos} photo(s) restaurée(s))`);
+  } catch(err){
+    console.error('Erreur restauration .zip:', err);
+    setSyncStatus('error', 'Erreur de synchro');
+    showToast('⚠️ La restauration a rencontré une erreur — vérifie tes données');
+  } finally {
+    input.value = '';
+  }
+}
+
 migrateIdsIfNeeded();
 editModeUnlocked = safeStorage.get('faune_edit_unlocked', 'false') === 'true';
 updateLockButton();
@@ -2588,6 +2820,7 @@ migrateIdsV3IfNeeded();
 render();
 initMap();
 initZoneMap();
+updateLastExportLabel();
 loadZonesFromSupabase().then(() => migrateIdsV3IfNeeded());
 // Séquence stricte (l'une après l'autre, jamais en parallèle) : les captures et
 // la galerie photo doivent être chargées avant que les migrations d'IDs et la
