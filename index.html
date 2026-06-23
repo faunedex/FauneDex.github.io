@@ -2432,6 +2432,8 @@ function updateLockButton(){
   }
   renderZoneMarkers(); // les popups de zones affichent ou masquent le bouton Supprimer selon le mode
   updateLastExportLabel(); // visible uniquement en mode édition
+  const dataTools = document.querySelector('.data-tools');
+  if(dataTools) dataTools.style.display = isEditUnlocked() ? '' : 'none';
 }
 
 function onLockButtonClick(){
@@ -2497,6 +2499,7 @@ function showToast(msg){
    inaccessible, ce fichier .zip resterait une copie autonome et utilisable
    de toute la collection. */
 async function exportData(){
+  if(!requireEditMode()) return;
   if(typeof JSZip === 'undefined'){
     showToast('⚠️ La sauvegarde nécessite une connexion internet (bibliothèque de compression non chargée)');
     return;
