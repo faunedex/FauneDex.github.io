@@ -2431,6 +2431,7 @@ function updateLockButton(){
     btn.classList.remove('unlocked');
   }
   renderZoneMarkers(); // les popups de zones affichent ou masquent le bouton Supprimer selon le mode
+  updateLastExportLabel(); // visible uniquement en mode édition
 }
 
 function onLockButtonClick(){
@@ -2572,10 +2573,16 @@ async function exportData(){
 }
 
 /* Affiche la date du dernier export dans l'interface, pour qu'on n'oublie
-   pas de refaire une sauvegarde de temps en temps. */
+   pas de refaire une sauvegarde de temps en temps. Réservé au mode édition :
+   ça concerne la personne qui gère les données, pas les visiteurs en lecture. */
 function updateLastExportLabel(){
   const el = document.getElementById('last-export-label');
   if(!el) return;
+  if(!isEditUnlocked()){
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
   const iso = safeStorage.get('faune_last_export_at', null);
   if(!iso){
     el.textContent = 'Aucune sauvegarde locale encore faite';
@@ -2820,7 +2827,6 @@ migrateIdsV3IfNeeded();
 render();
 initMap();
 initZoneMap();
-updateLastExportLabel();
 loadZonesFromSupabase().then(() => migrateIdsV3IfNeeded());
 // Séquence stricte (l'une après l'autre, jamais en parallèle) : les captures et
 // la galerie photo doivent être chargées avant que les migrations d'IDs et la
