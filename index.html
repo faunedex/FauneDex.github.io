@@ -484,8 +484,8 @@
 <main class="main">
   <div class="view-tabs">
     <button class="view-tab active" data-view="grid">📋 Collection</button>
-    <button class="view-tab" data-view="season">☀️ Saisons</button>
     <button class="view-tab" data-view="map">🗺️ Cartes</button>
+    <button class="view-tab" data-view="season">☀️ Saisons</button>
     <button class="view-tab" data-view="gallery">🖼️ Galerie</button>
   </div>
 
@@ -670,104 +670,105 @@ const ANIMALS = [
   {id:23,name:"Martre des pins",latin:"Martes martes",type:"Mammifère",emoji:"🦦",desc:"Plus sauvage que la fouine, avec une tache gorge jaune-orangée. Excellente grimpeuse.",habitat:"Grandes forêts",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {id:24,name:"Loutre d'Europe",latin:"Lutra lutra",type:"Mammifère",emoji:"🦦",desc:"De retour sur certains cours d'eau bourguignons. Très discrète, laisse des épreintes caractéristiques sur les berges.",habitat:"Rivières propres, étangs, canaux",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
   {id:25,name:"Putois d'Europe",latin:"Mustela putorius",type:"Mammifère",emoji:"🦦",desc:"Reconnaissable à son masque facial bicolore. Nocturne et discret, dégage un fumet musqué défensif.",habitat:"Berges, bocages, fermes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:26,name:"Pipistrelle commune",latin:"Pipistrellus pipistrellus",type:"Mammifère",emoji:"🦇",desc:"La plus petite et commune des chauves-souris françaises (3-8g). Visible dès le crépuscule.",habitat:"Villes, villages, forêts, jardins",months:[4,5,6,7,8,9,10]},
-  {id:27,name:"Grand Murin",latin:"Myotis myotis",type:"Mammifère",emoji:"🦇",desc:"Une des plus grandes chauves-souris d'Europe (envergure 40 cm). Chasse en rase-mottes dans les sous-bois.",habitat:"Caves, greniers, forêts",months:[4,5,6,7,8,9,10]},
-  {id:28,name:"Grand Rhinolophe",latin:"Rhinolophus ferrumequinum",type:"Mammifère",emoji:"🦇",desc:"Grande chauve-souris protégée, se suspend entièrement dans ses ailes pour hiberner. En déclin.",habitat:"Caves, mines, bâtiments anciens",months:[4,5,6,7,8,9,10]},
-  {id:29,name:"Petit Rhinolophe",latin:"Rhinolophus hipposideros",type:"Mammifère",emoji:"🦇",desc:"Le plus petit des rhinolophes européens, devenu très rare. Émet ses ultrasons par le nez.",habitat:"Caves, grottes, bâtiments anciens",months:[4,5,6,7,8,9,10]},
-  {id:30,name:"Loup gris",latin:"Canis lupus",type:"Mammifère",emoji:"🐺",desc:"Revenu naturellement en France depuis l'Italie dans les années 1990. La Côte-d'Or est en front de colonisation : sa présence reste très discrète et occasionnelle, surtout des individus de passage.",habitat:"Grands massifs forestiers, zones de passage",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:31,name:"Lynx boréal",latin:"Lynx lynx",type:"Mammifère",emoji:"🐆",desc:"Disparu de Bourgogne au XVIIIe siècle, revenu naturellement depuis le massif jurassien. Une première reproduction a été confirmée en Côte-d'Or en 2022. Extrêmement discret et rarement observé.",habitat:"Grands massifs forestiers, côte et arrière-côte",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:32,name:"Chat forestier",latin:"Felis silvestris",type:"Mammifère",emoji:"🐈",desc:"Ressemble à un chat domestique tigré mais plus trapu, avec une queue épaisse à bout arrondi. Discret et nocturne, présent dans les grands massifs boisés de Bourgogne.",habitat:"Grandes forêts, lisières tranquilles",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:26,name:"Genette commune",latin:"Genetta genetta",type:"Mammifère",emoji:"🦦",desc:"Petit carnivore svelte au pelage tacheté et longue queue annelée, en expansion vers le nord de la France. Discrète et nocturne, grimpe aisément aux arbres.",habitat:"Bocages, lisières, vieux murs, granges",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:27,name:"Pipistrelle commune",latin:"Pipistrellus pipistrellus",type:"Mammifère",emoji:"🦇",desc:"La plus petite et commune des chauves-souris françaises (3-8g). Visible dès le crépuscule.",habitat:"Villes, villages, forêts, jardins",months:[4,5,6,7,8,9,10]},
+  {id:28,name:"Grand Murin",latin:"Myotis myotis",type:"Mammifère",emoji:"🦇",desc:"Une des plus grandes chauves-souris d'Europe (envergure 40 cm). Chasse en rase-mottes dans les sous-bois.",habitat:"Caves, greniers, forêts",months:[4,5,6,7,8,9,10]},
+  {id:29,name:"Grand Rhinolophe",latin:"Rhinolophus ferrumequinum",type:"Mammifère",emoji:"🦇",desc:"Grande chauve-souris protégée, se suspend entièrement dans ses ailes pour hiberner. En déclin.",habitat:"Caves, mines, bâtiments anciens",months:[4,5,6,7,8,9,10]},
+  {id:30,name:"Petit Rhinolophe",latin:"Rhinolophus hipposideros",type:"Mammifère",emoji:"🦇",desc:"Le plus petit des rhinolophes européens, devenu très rare. Émet ses ultrasons par le nez.",habitat:"Caves, grottes, bâtiments anciens",months:[4,5,6,7,8,9,10]},
+  {id:31,name:"Loup gris",latin:"Canis lupus",type:"Mammifère",emoji:"🐺",desc:"Revenu naturellement en France depuis l'Italie dans les années 1990. La Côte-d'Or est en front de colonisation : sa présence reste très discrète et occasionnelle, surtout des individus de passage.",habitat:"Grands massifs forestiers, zones de passage",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:32,name:"Lynx boréal",latin:"Lynx lynx",type:"Mammifère",emoji:"🐆",desc:"Disparu de Bourgogne au XVIIIe siècle, revenu naturellement depuis le massif jurassien. Une première reproduction a été confirmée en Côte-d'Or en 2022. Extrêmement discret et rarement observé.",habitat:"Grands massifs forestiers, côte et arrière-côte",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:33,name:"Chat forestier",latin:"Felis silvestris",type:"Mammifère",emoji:"🐈",desc:"Ressemble à un chat domestique tigré mais plus trapu, avec une queue épaisse à bout arrondi. Discret et nocturne, présent dans les grands massifs boisés de Bourgogne.",habitat:"Grandes forêts, lisières tranquilles",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
   // ── OISEAUX ─────────────────────────────────────────────────────────────────
-  {id:33,name:"Merle noir",latin:"Turdus merula",type:"Oiseau",emoji:"🐦",desc:"Un des oiseaux les plus communs des jardins. Mâle entièrement noir au bec orange, femelle brune. Chant flûté mélodieux.",habitat:"Jardins, parcs, lisières, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:34,name:"Rouge-gorge familier",latin:"Erithacus rubecula",type:"Oiseau",emoji:"🐦",desc:"Petit passereau à la poitrine orange vif, très peu farouche. Chante presque toute l'année, même en hiver.",habitat:"Jardins, haies, sous-bois, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:35,name:"Mésange charbonnière",latin:"Parus major",type:"Oiseau",emoji:"🐦",desc:"La plus grande mésange commune, calotte noire et joues blanches. Très présente aux mangeoires en hiver.",habitat:"Jardins, parcs, forêts, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:36,name:"Mésange bleue",latin:"Cyanistes caeruleus",type:"Oiseau",emoji:"🐦",desc:"Petite mésange à calotte bleue vive. Acrobatique, friande des boules de graisse en hiver.",habitat:"Jardins, parcs, forêts de feuillus",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:37,name:"Rougequeue noir",latin:"Phoenicurus ochruros",type:"Oiseau",emoji:"🐦",desc:"Queue rousse vibrante caractéristique. Niche volontiers près des habitations et bâtiments en pierre.",habitat:"Villages, fermes, carrières, falaises",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:38,name:"Rougequeue à front blanc",latin:"Phoenicurus phoenicurus",type:"Oiseau",emoji:"🐦",desc:"Plus forestier que son cousin noir. Front blanc net chez le mâle. Migrateur, présent de printemps à été.",habitat:"Vergers, lisières, vieux arbres à cavités",months:[4,5,6,7,8,9]},
-  {id:39,name:"Troglodyte mignon",latin:"Troglodytes troglodytes",type:"Oiseau",emoji:"🐦",desc:"Minuscule passereau brun à queue dressée. Chant puissant et trillé surprenant pour sa taille.",habitat:"Sous-bois, haies, jardins broussailleux",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:40,name:"Étourneau sansonnet",latin:"Sturnus vulgaris",type:"Oiseau",emoji:"🐦",desc:"Plumage noir irisé, imite de nombreux sons. Forme de spectaculaires nuées (murmurations) à l'automne.",habitat:"Villages, plaines agricoles, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:41,name:"Pinson des arbres",latin:"Fringilla coelebs",type:"Oiseau",emoji:"🐦",desc:"Passereau très commun, mâle aux joues roses et calotte bleu-gris. Chant en cascade descendante typique.",habitat:"Forêts, jardins, parcs, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:42,name:"Chardonneret élégant",latin:"Carduelis carduelis",type:"Oiseau",emoji:"🐦",desc:"Visage rouge, blanc et noir très reconnaissable, ailes jaune vif en vol. Affectionne les graines de chardon.",habitat:"Jardins, vergers, friches, lisières",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:43,name:"Bergeronnette grise",latin:"Motacilla alba",type:"Oiseau",emoji:"🐦",desc:"Plumage gris, noir et blanc, hoche sans cesse la queue. Très commune près des habitations et points d'eau.",habitat:"Cours d'eau, fermes, parkings, toitures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:44,name:"Fauvette à tête noire",latin:"Sylvia atricapilla",type:"Oiseau",emoji:"🐦",desc:"Calotte noire chez le mâle, brune chez la femelle. Chant riche et fluide, très commune en lisière.",habitat:"Haies, sous-bois, jardins touffus",months:[3,4,5,6,7,8,9,10]},
-  {id:45,name:"Fauvette grisette",latin:"Sylvia communis",type:"Oiseau",emoji:"🐦",desc:"Passereau des friches et haies basses, gorge blanche nette. Chant grinçant émis depuis un perchoir bien visible.",habitat:"Friches, haies, bocages buissonnants",months:[4,5,6,7,8,9]},
-  {id:46,name:"Grive musicienne",latin:"Turdus philomelos",type:"Oiseau",emoji:"🐦",desc:"Poitrine tachetée, répète chaque phrase de son chant 2 à 3 fois. Très commune dans les jardins et bois.",habitat:"Jardins, forêts, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:47,name:"Tourterelle des bois",latin:"Streptopelia turtur",type:"Oiseau",emoji:"🐦",desc:"Migratrice estivale, plus discrète que la turque. Roucoulement doux et reconnaissable. En déclin en France.",habitat:"Bocages, lisières, haies",months:[5,6,7,8,9]},
-  {id:48,name:"Tourterelle turque",latin:"Streptopelia decaocto",type:"Oiseau",emoji:"🐦",desc:"Collier noir caractéristique sur la nuque. Très présente en ville et village, sédentaire toute l'année.",habitat:"Villages, jardins, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:49,name:"Pigeon ramier",latin:"Columba palumbus",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pigeon sauvage de France, tache blanche au cou. Roucoulement grave en 5 syllabes.",habitat:"Forêts, parcs, plaines agricoles",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:50,name:"Choucas des tours",latin:"Corvus monedula",type:"Oiseau",emoji:"🐦",desc:"Petit corvidé gris et noir aux yeux clairs. Niche en colonies dans les clochers, falaises et vieux arbres creux.",habitat:"Villages, clochers, falaises, vieux arbres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:51,name:"Coucou gris",latin:"Cuculus canorus",type:"Oiseau",emoji:"🐦",desc:"Chant à deux notes universellement connu. Pond ses œufs dans les nids d'autres passereaux. Migrateur d'été.",habitat:"Bocages, lisières, roselières",months:[4,5,6,7,8]},
-  {id:52,name:"Pic épeiche",latin:"Dendrocopos major",type:"Oiseau",emoji:"🐦",desc:"Le pic le plus visible, reconnaissable à ses couleurs noir-blanc-rouge et son tambourinage sonore.",habitat:"Forêts, parcs, jardins arborés",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:53,name:"Pic noir",latin:"Dryocopus martius",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pic d'Europe, entièrement noir avec calotte rouge vif. Cri rauque inconfondable.",habitat:"Grandes forêts de feuillus",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:54,name:"Pic vert",latin:"Picus viridis",type:"Oiseau",emoji:"🐦",desc:"Son rire sonore ('le yaffle') annonce la pluie selon la croyance. Cherche les fourmis au sol.",habitat:"Lisières, vergers, bocages, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:55,name:"Pic mar",latin:"Dendrocoptes medius",type:"Oiseau",emoji:"🐦",desc:"Plus petit que l'épeiche, calotte rouge entière. Inféodé aux vieilles chênaies de Côte-d'Or.",habitat:"Vieilles forêts de chênes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:56,name:"Martin-pêcheur",latin:"Alcedo atthis",type:"Oiseau",emoji:"🐦",desc:"Joyau turquoise et orange des berges. Vol rapide au ras de l'eau, plongeon vertical pour capturer un poisson. Espèce protégée.",habitat:"Ruisseaux, rivières, étangs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:57,name:"Vanneau huppé",latin:"Vanellus vanellus",type:"Oiseau",emoji:"🐦",desc:"Cri plaintif et vol papillonnant noir-et-blanc caractéristiques. Niche dans les prairies humides.",habitat:"Prairies, labours, zones humides",months:[2,3,4,9,10,11]},
-  {id:58,name:"Bécasse des bois",latin:"Scolopax rusticola",type:"Oiseau",emoji:"🐦",desc:"Maître du camouflage. La croule (parade) en lisière au crépuscule printanier est magique.",habitat:"Forêts humides, sous-bois",months:[3,4,10,11,12,1]},
-  {id:59,name:"Cincle plongeur",latin:"Cinclus cinclus",type:"Oiseau",emoji:"🐦",desc:"Seul passereau capable de marcher sous l'eau contre le courant. Boule brune-blanche des torrents propres.",habitat:"Cours d'eau rapides et propres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:60,name:"Bergeronnette des ruisseaux",latin:"Motacilla cinerea",type:"Oiseau",emoji:"🐦",desc:"Hoche sans cesse la queue au bord des cours d'eau. Ventre jaune vif.",habitat:"Ruisseaux, rivières, moulins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:61,name:"Geai des chênes",latin:"Garrulus glandarius",type:"Oiseau",emoji:"🐦",desc:"Planteur de chênes : stocke et 'oublie' des milliers de glands. Son cri d'alarme perçant avertit toute la forêt.",habitat:"Forêts de chênes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:62,name:"Grand corbeau",latin:"Corvus corax",type:"Oiseau",emoji:"🐦",desc:"Plus grand corvide (65 cm). Croassement grave et queue en losange le distinguent de la corneille.",habitat:"Forêts, falaises, zones rurales",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:63,name:"Corneille noire",latin:"Corvus corone",type:"Oiseau",emoji:"🐦",desc:"Corvide intelligent et opportuniste, présent partout. Sait utiliser les voitures pour casser des noix.",habitat:"Campagnes, villes, forêts",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:64,name:"Pie bavarde",latin:"Pica pica",type:"Oiseau",emoji:"🐦",desc:"Queue longue, plumage noir et blanc irisé. Nid fermé en dôme. Très curieuse et intelligente.",habitat:"Bocages, jardins, lisières, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:65,name:"Huppe fasciée",latin:"Upupa epops",type:"Oiseau",emoji:"🐦",desc:"Crête déployable orange et noir spectaculaire. Cri trisyllabique 'houp-houp-houp'. Migratrice printanière.",habitat:"Prairies, vergers, bocages",months:[4,5,6,7,8]},
-  {id:66,name:"Rollier d'Europe",latin:"Coracias garrulus",type:"Oiseau",emoji:"🐦",desc:"Oiseau aux couleurs tropicales (bleu turquoise et roux), nicheur rare et en déclin. Spectaculaire en vol.",habitat:"Coteaux boisés, vergers, bocages",months:[5,6,7,8]},
-  {id:67,name:"Loriot d'Europe",latin:"Oriolus oriolus",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à ailes noires. Chant flûté tropical. Très discret malgré sa couleur.",habitat:"Forêts de feuillus, ripisylves",months:[5,6,7,8]},
-  {id:68,name:"Faisan de Colchide",latin:"Phasianus colchicus",type:"Oiseau",emoji:"🐦",desc:"Gibier très chassé en Côte-d'Or. Mâle au plumage irisé spectaculaire. Présent en lisière de forêts et bosquets.",habitat:"Lisières, bocages, fourrés, cultures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:69,name:"Râle d'eau",latin:"Rallus aquaticus",type:"Oiseau",emoji:"🐦",desc:"Très discret dans les roselières, plus souvent entendu (cri strident) que vu.",habitat:"Roselières, marais, berges herbeuses",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:70,name:"Grand Cormoran",latin:"Phalacrocorax carbo",type:"Oiseau",emoji:"🐦",desc:"Plonge pour capturer des poissons. Étend les ailes pour les sécher faute de glande uropygienne.",habitat:"Lacs, rivières, plans d'eau",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:71,name:"Rémiz penduline",latin:"Remiz pendulinus",type:"Oiseau",emoji:"🐦",desc:"Passereau au masque noir, construit un nid remarquable en forme de poire suspendu à une branche.",habitat:"Roselières, ripisylves, berges boisées",months:[3,4,5,6,7,8,9,10]},
-  {id:72,name:"Hirondelle rustique",latin:"Hirundo rustica",type:"Oiseau",emoji:"🐦",desc:"Queue fourchue, gorge rouge. Arrive en avril d'Afrique sub-saharienne, niche dans les granges.",habitat:"Zones rurales, villages, fermes",months:[4,5,6,7,8,9]},
-  {id:73,name:"Martinet noir",latin:"Apus apus",type:"Oiseau",emoji:"🐦",desc:"Passe sa vie en vol sauf pour nicher. Cris stridents en groupe dans les villages en été. Dort en volant.",habitat:"Villes, villages (nicheur)",months:[5,6,7,8]},
-  {id:74,name:"Tarier pâtre",latin:"Saxicola rubicola",type:"Oiseau",emoji:"🐦",desc:"Petit passereau des friches, mâle à tête noire et poitrine orangée. Se perche bien en vue sur les buissons bas.",habitat:"Friches, prairies, talus broussailleux",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:75,name:"Bruant jaune",latin:"Emberiza citrinella",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à dos strié de brun. Chant souvent décrit comme 'un peu de pain et pas de fromage'.",habitat:"Bocages, haies, lisières de cultures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:76,name:"Grand Héron cendré",latin:"Ardea cinerea",type:"Oiseau",emoji:"🦢",desc:"Pêcheur immobile au bord des eaux. Grande silhouette grise inconfondable, cou replié en vol.",habitat:"Étangs, rivières, zones humides",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:77,name:"Grue cendrée",latin:"Grus grus",type:"Oiseau",emoji:"🦢",desc:"Migration spectaculaire en V, des dizaines de milliers traversent la Bourgogne en octobre-novembre.",habitat:"Plaines, prairies (migration)",months:[1,2,3,10,11,12]},
-  {id:78,name:"Cigogne blanche",latin:"Ciconia ciconia",type:"Oiseau",emoji:"🕊️",desc:"Migratrice visible au printemps et en automne. Niche occasionnellement en Bourgogne.",habitat:"Prairies humides, étangs, grandes plaines",months:[3,4,5,6,7,8,9]},
-  {id:79,name:"Cigogne noire",latin:"Ciconia nigra",type:"Oiseau",emoji:"🕊️",desc:"Plus discrète que la blanche, elle niche dans les grandes forêts proches des rivières.",habitat:"Grandes forêts, vallées boisées",months:[4,5,6,7,8,9]},
-  {id:80,name:"Milan royal",latin:"Milvus milvus",type:"Oiseau",emoji:"🦅",desc:"Rapace à longue queue fourchue rousse. La Bourgogne est un site majeur d'hivernage en France.",habitat:"Bocages, vallées, lisières",months:[1,2,3,10,11,12]},
-  {id:81,name:"Milan noir",latin:"Milvus migrans",type:"Oiseau",emoji:"🦅",desc:"Rapace migrateur d'avril à août, queue peu fourchue. Souvent au-dessus des plans d'eau.",habitat:"Rivières, lacs, zones humides",months:[4,5,6,7,8]},
-  {id:82,name:"Buse variable",latin:"Buteo buteo",type:"Oiseau",emoji:"🦅",desc:"Le rapace le plus commun de France. Souvent posé sur les poteaux en bord de route.",habitat:"Lisières, bocages, plaines",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:83,name:"Circaète Jean-le-Blanc",latin:"Circaetus gallicus",type:"Oiseau",emoji:"🦅",desc:"Spécialiste des serpents. Grand planeur à tête ronde et yeux jaunes rappelant une chouette.",habitat:"Coteaux, landes, forêts claires",months:[4,5,6,7,8,9]},
-  {id:84,name:"Faucon pèlerin",latin:"Falco peregrinus",type:"Oiseau",emoji:"🦅",desc:"Le plus rapide du règne animal en piqué (>300 km/h). Niche sur des clochers et falaises.",habitat:"Falaises, clochers, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:85,name:"Faucon crécerelle",latin:"Falco tinnunculus",type:"Oiseau",emoji:"🦅",desc:"Reconnaissable à son vol stationnaire (le 'Saint-Esprit'). Très commun en plaine.",habitat:"Campagnes, lisières, villages",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:86,name:"Épervier d'Europe",latin:"Accipiter nisus",type:"Oiseau",emoji:"🦅",desc:"Prédateur furtif des oiseaux en vol, surgit à toute vitesse des haies.",habitat:"Forêts, bocages, jardins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:87,name:"Autour des palombes",latin:"Accipiter gentilis",type:"Oiseau",emoji:"🦅",desc:"Grand rapace forestier chassant en forêt dense. Discret, son passage fulgurant entre les troncs est impressionnant.",habitat:"Grandes forêts",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:88,name:"Busard Saint-Martin",latin:"Circus cyaneus",type:"Oiseau",emoji:"🦅",desc:"Chasse en volant bas sur les plaines. Mâle gris perle, femelle brune avec croupion blanc.",habitat:"Plaines céréalières, prairies",months:[1,2,3,4,9,10,11,12]},
-  {id:89,name:"Busard des roseaux",latin:"Circus aeruginosus",type:"Oiseau",emoji:"🦅",desc:"Rapace des zones humides. Le mâle a des ailes tricolores spectaculaires. Niche dans les roselières.",habitat:"Roselières, étangs, marais",months:[4,5,6,7,8,9]},
-  {id:90,name:"Hibou grand-duc",latin:"Bubo bubo",type:"Oiseau",emoji:"🦉",desc:"Le plus grand rapace nocturne d'Europe (1,8 m d'envergure). Présent dans les zones rocheuses de Côte-d'Or.",habitat:"Falaises, grandes forêts, carrières",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:91,name:"Chouette hulotte",latin:"Strix aluco",type:"Oiseau",emoji:"🦉",desc:"La chouette la plus commune. Son ululement résonne dans les nuits forestières. Chasse les campagnols.",habitat:"Forêts de feuillus, parcs, jardins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:92,name:"Chouette effraie",latin:"Tyto alba",type:"Oiseau",emoji:"🦉",desc:"Visage en cœur blanc caractéristique. Niche dans les clochers et granges. Cri strident la nuit.",habitat:"Clochers, granges, ruines, bocages",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:93,name:"Hibou moyen-duc",latin:"Asio otus",type:"Oiseau",emoji:"🦉",desc:"Oreilles touffues bien visibles. Nocturne, se colle contre un tronc le jour pour disparaître.",habitat:"Bocages, forêts de conifères, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:94,name:"Grèbe huppé",latin:"Podiceps cristatus",type:"Oiseau",emoji:"🦆",desc:"Sa parade nuptiale face-à-face avec bouquets de plumes est spectaculaire. Excellent plongeur.",habitat:"Étangs, lacs, grands plans d'eau",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:95,name:"Harle bièvre",latin:"Mergus merganser",type:"Oiseau",emoji:"🦆",desc:"Grand canard plongeur au bec dentelé pour saisir les poissons. Présent l'hiver sur les rivières.",habitat:"Rivières, lacs, grands plans d'eau",months:[11,12,1,2,3]},
-  {id:96,name:"Canard pilet",latin:"Anas acuta",type:"Oiseau",emoji:"🦆",desc:"Gracieux canard à long cou, les plumes caudales du mâle forment une élégante pointe. Migrateur.",habitat:"Étangs, rivières, plaines inondables",months:[10,11,12,1,2,3]},
-  {id:97,name:"Sittelle torchepot",latin:"Sitta europaea",type:"Oiseau",emoji:"🐦",desc:"Seul passereau capable de descendre les troncs tête en bas. Plumage gris-bleu et flancs roux, cri puissant et flûté.",habitat:"Forêts de feuillus, parcs, jardins boisés",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:98,name:"Verdier d'Europe",latin:"Chloris chloris",type:"Oiseau",emoji:"🐦",desc:"Robuste passereau vert olive, ailes barrées de jaune vif en vol. Chant nasillard caractéristique, gros bec conique pour les graines.",habitat:"Jardins, parcs, lisières, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:99,name:"Moineau domestique",latin:"Passer domesticus",type:"Oiseau",emoji:"🐦",desc:"Petit passereau grégaire des villages et villes, mâle à calotte grise et bavette noire. Très commun près des habitations.",habitat:"Villages, fermes, jardins, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
-  {id:100,name:"Grimpereau des jardins",latin:"Certhia brachydactyla",type:"Oiseau",emoji:"🐦",desc:"Petit passereau brun strié grimpant en spirale le long des troncs à la recherche d'insectes. Bec fin et courbé, queue rigide.",habitat:"Jardins, parcs, forêts, vieux arbres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:34,name:"Merle noir",latin:"Turdus merula",type:"Oiseau",emoji:"🐦",desc:"Un des oiseaux les plus communs des jardins. Mâle entièrement noir au bec orange, femelle brune. Chant flûté mélodieux.",habitat:"Jardins, parcs, lisières, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:35,name:"Rouge-gorge familier",latin:"Erithacus rubecula",type:"Oiseau",emoji:"🐦",desc:"Petit passereau à la poitrine orange vif, très peu farouche. Chante presque toute l'année, même en hiver.",habitat:"Jardins, haies, sous-bois, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:36,name:"Mésange charbonnière",latin:"Parus major",type:"Oiseau",emoji:"🐦",desc:"La plus grande mésange commune, calotte noire et joues blanches. Très présente aux mangeoires en hiver.",habitat:"Jardins, parcs, forêts, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:37,name:"Mésange bleue",latin:"Cyanistes caeruleus",type:"Oiseau",emoji:"🐦",desc:"Petite mésange à calotte bleue vive. Acrobatique, friande des boules de graisse en hiver.",habitat:"Jardins, parcs, forêts de feuillus",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:38,name:"Rougequeue noir",latin:"Phoenicurus ochruros",type:"Oiseau",emoji:"🐦",desc:"Queue rousse vibrante caractéristique. Niche volontiers près des habitations et bâtiments en pierre.",habitat:"Villages, fermes, carrières, falaises",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:39,name:"Rougequeue à front blanc",latin:"Phoenicurus phoenicurus",type:"Oiseau",emoji:"🐦",desc:"Plus forestier que son cousin noir. Front blanc net chez le mâle. Migrateur, présent de printemps à été.",habitat:"Vergers, lisières, vieux arbres à cavités",months:[4,5,6,7,8,9]},
+  {id:40,name:"Troglodyte mignon",latin:"Troglodytes troglodytes",type:"Oiseau",emoji:"🐦",desc:"Minuscule passereau brun à queue dressée. Chant puissant et trillé surprenant pour sa taille.",habitat:"Sous-bois, haies, jardins broussailleux",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:41,name:"Étourneau sansonnet",latin:"Sturnus vulgaris",type:"Oiseau",emoji:"🐦",desc:"Plumage noir irisé, imite de nombreux sons. Forme de spectaculaires nuées (murmurations) à l'automne.",habitat:"Villages, plaines agricoles, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:42,name:"Pinson des arbres",latin:"Fringilla coelebs",type:"Oiseau",emoji:"🐦",desc:"Passereau très commun, mâle aux joues roses et calotte bleu-gris. Chant en cascade descendante typique.",habitat:"Forêts, jardins, parcs, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:43,name:"Chardonneret élégant",latin:"Carduelis carduelis",type:"Oiseau",emoji:"🐦",desc:"Visage rouge, blanc et noir très reconnaissable, ailes jaune vif en vol. Affectionne les graines de chardon.",habitat:"Jardins, vergers, friches, lisières",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:44,name:"Bergeronnette grise",latin:"Motacilla alba",type:"Oiseau",emoji:"🐦",desc:"Plumage gris, noir et blanc, hoche sans cesse la queue. Très commune près des habitations et points d'eau.",habitat:"Cours d'eau, fermes, parkings, toitures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:45,name:"Fauvette à tête noire",latin:"Sylvia atricapilla",type:"Oiseau",emoji:"🐦",desc:"Calotte noire chez le mâle, brune chez la femelle. Chant riche et fluide, très commune en lisière.",habitat:"Haies, sous-bois, jardins touffus",months:[3,4,5,6,7,8,9,10]},
+  {id:46,name:"Fauvette grisette",latin:"Sylvia communis",type:"Oiseau",emoji:"🐦",desc:"Passereau des friches et haies basses, gorge blanche nette. Chant grinçant émis depuis un perchoir bien visible.",habitat:"Friches, haies, bocages buissonnants",months:[4,5,6,7,8,9]},
+  {id:47,name:"Grive musicienne",latin:"Turdus philomelos",type:"Oiseau",emoji:"🐦",desc:"Poitrine tachetée, répète chaque phrase de son chant 2 à 3 fois. Très commune dans les jardins et bois.",habitat:"Jardins, forêts, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:48,name:"Tourterelle des bois",latin:"Streptopelia turtur",type:"Oiseau",emoji:"🐦",desc:"Migratrice estivale, plus discrète que la turque. Roucoulement doux et reconnaissable. En déclin en France.",habitat:"Bocages, lisières, haies",months:[5,6,7,8,9]},
+  {id:49,name:"Tourterelle turque",latin:"Streptopelia decaocto",type:"Oiseau",emoji:"🐦",desc:"Collier noir caractéristique sur la nuque. Très présente en ville et village, sédentaire toute l'année.",habitat:"Villages, jardins, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:50,name:"Pigeon ramier",latin:"Columba palumbus",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pigeon sauvage de France, tache blanche au cou. Roucoulement grave en 5 syllabes.",habitat:"Forêts, parcs, plaines agricoles",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:51,name:"Choucas des tours",latin:"Corvus monedula",type:"Oiseau",emoji:"🐦",desc:"Petit corvidé gris et noir aux yeux clairs. Niche en colonies dans les clochers, falaises et vieux arbres creux.",habitat:"Villages, clochers, falaises, vieux arbres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:52,name:"Coucou gris",latin:"Cuculus canorus",type:"Oiseau",emoji:"🐦",desc:"Chant à deux notes universellement connu. Pond ses œufs dans les nids d'autres passereaux. Migrateur d'été.",habitat:"Bocages, lisières, roselières",months:[4,5,6,7,8]},
+  {id:53,name:"Pic épeiche",latin:"Dendrocopos major",type:"Oiseau",emoji:"🐦",desc:"Le pic le plus visible, reconnaissable à ses couleurs noir-blanc-rouge et son tambourinage sonore.",habitat:"Forêts, parcs, jardins arborés",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:54,name:"Pic noir",latin:"Dryocopus martius",type:"Oiseau",emoji:"🐦",desc:"Le plus grand pic d'Europe, entièrement noir avec calotte rouge vif. Cri rauque inconfondable.",habitat:"Grandes forêts de feuillus",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:55,name:"Pic vert",latin:"Picus viridis",type:"Oiseau",emoji:"🐦",desc:"Son rire sonore ('le yaffle') annonce la pluie selon la croyance. Cherche les fourmis au sol.",habitat:"Lisières, vergers, bocages, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:56,name:"Pic mar",latin:"Dendrocoptes medius",type:"Oiseau",emoji:"🐦",desc:"Plus petit que l'épeiche, calotte rouge entière. Inféodé aux vieilles chênaies de Côte-d'Or.",habitat:"Vieilles forêts de chênes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:57,name:"Martin-pêcheur",latin:"Alcedo atthis",type:"Oiseau",emoji:"🐦",desc:"Joyau turquoise et orange des berges. Vol rapide au ras de l'eau, plongeon vertical pour capturer un poisson. Espèce protégée.",habitat:"Ruisseaux, rivières, étangs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:58,name:"Vanneau huppé",latin:"Vanellus vanellus",type:"Oiseau",emoji:"🐦",desc:"Cri plaintif et vol papillonnant noir-et-blanc caractéristiques. Niche dans les prairies humides.",habitat:"Prairies, labours, zones humides",months:[2,3,4,9,10,11]},
+  {id:59,name:"Bécasse des bois",latin:"Scolopax rusticola",type:"Oiseau",emoji:"🐦",desc:"Maître du camouflage. La croule (parade) en lisière au crépuscule printanier est magique.",habitat:"Forêts humides, sous-bois",months:[3,4,10,11,12,1]},
+  {id:60,name:"Cincle plongeur",latin:"Cinclus cinclus",type:"Oiseau",emoji:"🐦",desc:"Seul passereau capable de marcher sous l'eau contre le courant. Boule brune-blanche des torrents propres.",habitat:"Cours d'eau rapides et propres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:61,name:"Bergeronnette des ruisseaux",latin:"Motacilla cinerea",type:"Oiseau",emoji:"🐦",desc:"Hoche sans cesse la queue au bord des cours d'eau. Ventre jaune vif.",habitat:"Ruisseaux, rivières, moulins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:62,name:"Geai des chênes",latin:"Garrulus glandarius",type:"Oiseau",emoji:"🐦",desc:"Planteur de chênes : stocke et 'oublie' des milliers de glands. Son cri d'alarme perçant avertit toute la forêt.",habitat:"Forêts de chênes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:63,name:"Grand corbeau",latin:"Corvus corax",type:"Oiseau",emoji:"🐦",desc:"Plus grand corvide (65 cm). Croassement grave et queue en losange le distinguent de la corneille.",habitat:"Forêts, falaises, zones rurales",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:64,name:"Corneille noire",latin:"Corvus corone",type:"Oiseau",emoji:"🐦",desc:"Corvide intelligent et opportuniste, présent partout. Sait utiliser les voitures pour casser des noix.",habitat:"Campagnes, villes, forêts",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:65,name:"Pie bavarde",latin:"Pica pica",type:"Oiseau",emoji:"🐦",desc:"Queue longue, plumage noir et blanc irisé. Nid fermé en dôme. Très curieuse et intelligente.",habitat:"Bocages, jardins, lisières, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:66,name:"Huppe fasciée",latin:"Upupa epops",type:"Oiseau",emoji:"🐦",desc:"Crête déployable orange et noir spectaculaire. Cri trisyllabique 'houp-houp-houp'. Migratrice printanière.",habitat:"Prairies, vergers, bocages",months:[4,5,6,7,8]},
+  {id:67,name:"Rollier d'Europe",latin:"Coracias garrulus",type:"Oiseau",emoji:"🐦",desc:"Oiseau aux couleurs tropicales (bleu turquoise et roux), nicheur rare et en déclin. Spectaculaire en vol.",habitat:"Coteaux boisés, vergers, bocages",months:[5,6,7,8]},
+  {id:68,name:"Loriot d'Europe",latin:"Oriolus oriolus",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à ailes noires. Chant flûté tropical. Très discret malgré sa couleur.",habitat:"Forêts de feuillus, ripisylves",months:[5,6,7,8]},
+  {id:69,name:"Faisan de Colchide",latin:"Phasianus colchicus",type:"Oiseau",emoji:"🐦",desc:"Gibier très chassé en Côte-d'Or. Mâle au plumage irisé spectaculaire. Présent en lisière de forêts et bosquets.",habitat:"Lisières, bocages, fourrés, cultures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:70,name:"Râle d'eau",latin:"Rallus aquaticus",type:"Oiseau",emoji:"🐦",desc:"Très discret dans les roselières, plus souvent entendu (cri strident) que vu.",habitat:"Roselières, marais, berges herbeuses",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:71,name:"Grand Cormoran",latin:"Phalacrocorax carbo",type:"Oiseau",emoji:"🐦",desc:"Plonge pour capturer des poissons. Étend les ailes pour les sécher faute de glande uropygienne.",habitat:"Lacs, rivières, plans d'eau",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:72,name:"Rémiz penduline",latin:"Remiz pendulinus",type:"Oiseau",emoji:"🐦",desc:"Passereau au masque noir, construit un nid remarquable en forme de poire suspendu à une branche.",habitat:"Roselières, ripisylves, berges boisées",months:[3,4,5,6,7,8,9,10]},
+  {id:73,name:"Hirondelle rustique",latin:"Hirundo rustica",type:"Oiseau",emoji:"🐦",desc:"Queue fourchue, gorge rouge. Arrive en avril d'Afrique sub-saharienne, niche dans les granges.",habitat:"Zones rurales, villages, fermes",months:[4,5,6,7,8,9]},
+  {id:74,name:"Martinet noir",latin:"Apus apus",type:"Oiseau",emoji:"🐦",desc:"Passe sa vie en vol sauf pour nicher. Cris stridents en groupe dans les villages en été. Dort en volant.",habitat:"Villes, villages (nicheur)",months:[5,6,7,8]},
+  {id:75,name:"Tarier pâtre",latin:"Saxicola rubicola",type:"Oiseau",emoji:"🐦",desc:"Petit passereau des friches, mâle à tête noire et poitrine orangée. Se perche bien en vue sur les buissons bas.",habitat:"Friches, prairies, talus broussailleux",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:76,name:"Bruant jaune",latin:"Emberiza citrinella",type:"Oiseau",emoji:"🐦",desc:"Mâle jaune vif à dos strié de brun. Chant souvent décrit comme 'un peu de pain et pas de fromage'.",habitat:"Bocages, haies, lisières de cultures",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:77,name:"Sittelle torchepot",latin:"Sitta europaea",type:"Oiseau",emoji:"🐦",desc:"Seul passereau capable de descendre les troncs tête en bas. Plumage gris-bleu et flancs roux, cri puissant et flûté.",habitat:"Forêts de feuillus, parcs, jardins boisés",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:78,name:"Verdier d'Europe",latin:"Chloris chloris",type:"Oiseau",emoji:"🐦",desc:"Robuste passereau vert olive, ailes barrées de jaune vif en vol. Chant nasillard caractéristique, gros bec conique pour les graines.",habitat:"Jardins, parcs, lisières, haies",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:79,name:"Moineau domestique",latin:"Passer domesticus",type:"Oiseau",emoji:"🐦",desc:"Petit passereau grégaire des villages et villes, mâle à calotte grise et bavette noire. Très commun près des habitations.",habitat:"Villages, fermes, jardins, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:80,name:"Grimpereau des jardins",latin:"Certhia brachydactyla",type:"Oiseau",emoji:"🐦",desc:"Petit passereau brun strié grimpant en spirale le long des troncs à la recherche d'insectes. Bec fin et courbé, queue rigide.",habitat:"Jardins, parcs, forêts, vieux arbres",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:81,name:"Grand Héron cendré",latin:"Ardea cinerea",type:"Oiseau",emoji:"🦢",desc:"Pêcheur immobile au bord des eaux. Grande silhouette grise inconfondable, cou replié en vol.",habitat:"Étangs, rivières, zones humides",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:82,name:"Grue cendrée",latin:"Grus grus",type:"Oiseau",emoji:"🦢",desc:"Migration spectaculaire en V, des dizaines de milliers traversent la Bourgogne en octobre-novembre.",habitat:"Plaines, prairies (migration)",months:[1,2,3,10,11,12]},
+  {id:83,name:"Cigogne blanche",latin:"Ciconia ciconia",type:"Oiseau",emoji:"🕊️",desc:"Migratrice visible au printemps et en automne. Niche occasionnellement en Bourgogne.",habitat:"Prairies humides, étangs, grandes plaines",months:[3,4,5,6,7,8,9]},
+  {id:84,name:"Cigogne noire",latin:"Ciconia nigra",type:"Oiseau",emoji:"🕊️",desc:"Plus discrète que la blanche, elle niche dans les grandes forêts proches des rivières.",habitat:"Grandes forêts, vallées boisées",months:[4,5,6,7,8,9]},
+  {id:85,name:"Milan royal",latin:"Milvus milvus",type:"Oiseau",emoji:"🦅",desc:"Rapace à longue queue fourchue rousse. La Bourgogne est un site majeur d'hivernage en France.",habitat:"Bocages, vallées, lisières",months:[1,2,3,10,11,12]},
+  {id:86,name:"Milan noir",latin:"Milvus migrans",type:"Oiseau",emoji:"🦅",desc:"Rapace migrateur d'avril à août, queue peu fourchue. Souvent au-dessus des plans d'eau.",habitat:"Rivières, lacs, zones humides",months:[4,5,6,7,8]},
+  {id:87,name:"Buse variable",latin:"Buteo buteo",type:"Oiseau",emoji:"🦅",desc:"Le rapace le plus commun de France. Souvent posé sur les poteaux en bord de route.",habitat:"Lisières, bocages, plaines",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:88,name:"Circaète Jean-le-Blanc",latin:"Circaetus gallicus",type:"Oiseau",emoji:"🦅",desc:"Spécialiste des serpents. Grand planeur à tête ronde et yeux jaunes rappelant une chouette.",habitat:"Coteaux, landes, forêts claires",months:[4,5,6,7,8,9]},
+  {id:89,name:"Faucon pèlerin",latin:"Falco peregrinus",type:"Oiseau",emoji:"🦅",desc:"Le plus rapide du règne animal en piqué (>300 km/h). Niche sur des clochers et falaises.",habitat:"Falaises, clochers, villes",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:90,name:"Faucon crécerelle",latin:"Falco tinnunculus",type:"Oiseau",emoji:"🦅",desc:"Reconnaissable à son vol stationnaire (le 'Saint-Esprit'). Très commun en plaine.",habitat:"Campagnes, lisières, villages",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:91,name:"Épervier d'Europe",latin:"Accipiter nisus",type:"Oiseau",emoji:"🦅",desc:"Prédateur furtif des oiseaux en vol, surgit à toute vitesse des haies.",habitat:"Forêts, bocages, jardins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:92,name:"Autour des palombes",latin:"Accipiter gentilis",type:"Oiseau",emoji:"🦅",desc:"Grand rapace forestier chassant en forêt dense. Discret, son passage fulgurant entre les troncs est impressionnant.",habitat:"Grandes forêts",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:93,name:"Busard Saint-Martin",latin:"Circus cyaneus",type:"Oiseau",emoji:"🦅",desc:"Chasse en volant bas sur les plaines. Mâle gris perle, femelle brune avec croupion blanc.",habitat:"Plaines céréalières, prairies",months:[1,2,3,4,9,10,11,12]},
+  {id:94,name:"Busard des roseaux",latin:"Circus aeruginosus",type:"Oiseau",emoji:"🦅",desc:"Rapace des zones humides. Le mâle a des ailes tricolores spectaculaires. Niche dans les roselières.",habitat:"Roselières, étangs, marais",months:[4,5,6,7,8,9]},
+  {id:95,name:"Hibou grand-duc",latin:"Bubo bubo",type:"Oiseau",emoji:"🦉",desc:"Le plus grand rapace nocturne d'Europe (1,8 m d'envergure). Présent dans les zones rocheuses de Côte-d'Or.",habitat:"Falaises, grandes forêts, carrières",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:96,name:"Chouette hulotte",latin:"Strix aluco",type:"Oiseau",emoji:"🦉",desc:"La chouette la plus commune. Son ululement résonne dans les nuits forestières. Chasse les campagnols.",habitat:"Forêts de feuillus, parcs, jardins",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:97,name:"Chouette effraie",latin:"Tyto alba",type:"Oiseau",emoji:"🦉",desc:"Visage en cœur blanc caractéristique. Niche dans les clochers et granges. Cri strident la nuit.",habitat:"Clochers, granges, ruines, bocages",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:98,name:"Hibou moyen-duc",latin:"Asio otus",type:"Oiseau",emoji:"🦉",desc:"Oreilles touffues bien visibles. Nocturne, se colle contre un tronc le jour pour disparaître.",habitat:"Bocages, forêts de conifères, parcs",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:99,name:"Grèbe huppé",latin:"Podiceps cristatus",type:"Oiseau",emoji:"🦆",desc:"Sa parade nuptiale face-à-face avec bouquets de plumes est spectaculaire. Excellent plongeur.",habitat:"Étangs, lacs, grands plans d'eau",months:[1,2,3,4,5,6,7,8,9,10,11,12]},
+  {id:100,name:"Harle bièvre",latin:"Mergus merganser",type:"Oiseau",emoji:"🦆",desc:"Grand canard plongeur au bec dentelé pour saisir les poissons. Présent l'hiver sur les rivières.",habitat:"Rivières, lacs, grands plans d'eau",months:[11,12,1,2,3]},
+  {id:101,name:"Canard pilet",latin:"Anas acuta",type:"Oiseau",emoji:"🦆",desc:"Gracieux canard à long cou, les plumes caudales du mâle forment une élégante pointe. Migrateur.",habitat:"Étangs, rivières, plaines inondables",months:[10,11,12,1,2,3]},
   // ── REPTILES ────────────────────────────────────────────────────────────────
-  {id:101,name:"Lézard vert occidental",latin:"Lacerta bilineata",type:"Reptile",emoji:"🦎",desc:"Mâle d'un vert éclatant, gorge bleue en saison nuptiale. La femelle est plus terne avec des raies claires.",habitat:"Coteaux, haies, talus ensoleillés, vignes",months:[3,4,5,6,7,8,9,10]},
-  {id:102,name:"Lézard des murailles",latin:"Podarcis muralis",type:"Reptile",emoji:"🦎",desc:"Commun sur les murs de pierre, rochers et voies ferrées. Excellent grimpeur et héliophile.",habitat:"Murs, rochers, voies ferrées, coteaux",months:[3,4,5,6,7,8,9,10]},
-  {id:103,name:"Lézard agile",latin:"Lacerta agilis",type:"Reptile",emoji:"🦎",desc:"Moins commun. Mâle vert vif sur les flancs au printemps. Milieux secs et chauds.",habitat:"Coteaux secs, landes, talus ensoleillés",months:[3,4,5,6,7,8,9,10]},
-  {id:104,name:"Orvet fragile",latin:"Anguis fragilis",type:"Reptile",emoji:"🐍",desc:"Lézard sans pattes souvent confondu avec un serpent. Autotomie de la queue possible. Mange des limaces.",habitat:"Jardins, compost, prairies, lisières",months:[3,4,5,6,7,8,9,10]},
-  {id:105,name:"Couleuvre helvétique",latin:"Natrix helvetica",type:"Reptile",emoji:"🐍",desc:"Anciennement classée avec la couleuvre à collier. Semi-aquatique, collier clair caractéristique. Inoffensive, joue le mort.",habitat:"Zones humides, jardins, ruisseaux",months:[3,4,5,6,7,8,9,10]},
-  {id:106,name:"Couleuvre verte et jaune",latin:"Hierophis viridiflavus",type:"Reptile",emoji:"🐍",desc:"Grand serpent (jusqu'à 1,5 m) rapide et agile. Inoffensif mais mordeur si capturé.",habitat:"Talus, coteaux, haies, buissons",months:[4,5,6,7,8,9]},
-  {id:107,name:"Couleuvre d'Esculape",latin:"Zamenis longissimus",type:"Reptile",emoji:"🐍",desc:"Grand serpent élancé brun-olive, inoffensif et excellent grimpeur. Symbole de la médecine (caducée).",habitat:"Coteaux boisés, forêts claires, murs",months:[4,5,6,7,8,9]},
-  {id:108,name:"Vipère aspic",latin:"Vipera aspis",type:"Reptile",emoji:"🐍",desc:"Seul serpent venimeux de la région. Pupille verticale, museau légèrement retroussé. Très prudente.",habitat:"Coteaux pierreux secs, lisières, rochers",months:[3,4,5,6,7,8,9,10]},
+  {id:102,name:"Lézard vert occidental",latin:"Lacerta bilineata",type:"Reptile",emoji:"🦎",desc:"Mâle d'un vert éclatant, gorge bleue en saison nuptiale. La femelle est plus terne avec des raies claires.",habitat:"Coteaux, haies, talus ensoleillés, vignes",months:[3,4,5,6,7,8,9,10]},
+  {id:103,name:"Lézard des murailles",latin:"Podarcis muralis",type:"Reptile",emoji:"🦎",desc:"Commun sur les murs de pierre, rochers et voies ferrées. Excellent grimpeur et héliophile.",habitat:"Murs, rochers, voies ferrées, coteaux",months:[3,4,5,6,7,8,9,10]},
+  {id:104,name:"Lézard agile",latin:"Lacerta agilis",type:"Reptile",emoji:"🦎",desc:"Moins commun. Mâle vert vif sur les flancs au printemps. Milieux secs et chauds.",habitat:"Coteaux secs, landes, talus ensoleillés",months:[3,4,5,6,7,8,9,10]},
+  {id:105,name:"Orvet fragile",latin:"Anguis fragilis",type:"Reptile",emoji:"🐍",desc:"Lézard sans pattes souvent confondu avec un serpent. Autotomie de la queue possible. Mange des limaces.",habitat:"Jardins, compost, prairies, lisières",months:[3,4,5,6,7,8,9,10]},
+  {id:106,name:"Couleuvre helvétique",latin:"Natrix helvetica",type:"Reptile",emoji:"🐍",desc:"Anciennement classée avec la couleuvre à collier. Semi-aquatique, collier clair caractéristique. Inoffensive, joue le mort.",habitat:"Zones humides, jardins, ruisseaux",months:[3,4,5,6,7,8,9,10]},
+  {id:107,name:"Couleuvre verte et jaune",latin:"Hierophis viridiflavus",type:"Reptile",emoji:"🐍",desc:"Grand serpent (jusqu'à 1,5 m) rapide et agile. Inoffensif mais mordeur si capturé.",habitat:"Talus, coteaux, haies, buissons",months:[4,5,6,7,8,9]},
+  {id:108,name:"Couleuvre d'Esculape",latin:"Zamenis longissimus",type:"Reptile",emoji:"🐍",desc:"Grand serpent élancé brun-olive, inoffensif et excellent grimpeur. Symbole de la médecine (caducée).",habitat:"Coteaux boisés, forêts claires, murs",months:[4,5,6,7,8,9]},
+  {id:109,name:"Vipère aspic",latin:"Vipera aspis",type:"Reptile",emoji:"🐍",desc:"Seul serpent venimeux de la région. Pupille verticale, museau légèrement retroussé. Très prudente.",habitat:"Coteaux pierreux secs, lisières, rochers",months:[3,4,5,6,7,8,9,10]},
   // ── AMPHIBIENS ──────────────────────────────────────────────────────────────
-  {id:109,name:"Grenouille rousse",latin:"Rana temporaria",type:"Amphibien",emoji:"🐸",desc:"La plus commune des grenouilles brunes. Envahit les mares en masse dès février pour se reproduire.",habitat:"Mares, étangs, prairies humides, bois",months:[2,3,4,5,6,7,8,9]},
-  {id:110,name:"Grenouille agile",latin:"Rana dalmatina",type:"Amphibien",emoji:"🐸",desc:"Pattes postérieures très longues (record de saut). Plus forestière que la grenouille rousse.",habitat:"Forêts humides, prairies, mares",months:[3,4,5,6,7,8,9]},
-  {id:111,name:"Grenouille verte",latin:"Pelophylax kl. esculentus",type:"Amphibien",emoji:"🐸",desc:"Bruyante, présente dans tous les étangs bourguignons. Son coassement estival est incontournable.",habitat:"Étangs, mares, fossés, canaux",months:[4,5,6,7,8,9]},
-  {id:112,name:"Crapaud commun",latin:"Bufo bufo",type:"Amphibien",emoji:"🐸",desc:"Grand et verruqueux, migre massivement vers ses mares natales dès les premières pluies de mars.",habitat:"Forêts, jardins, zones humides, caves",months:[3,4,5,6,7,8,9,10]},
-  {id:113,name:"Crapaud calamite",latin:"Epidalea calamita",type:"Amphibien",emoji:"🐸",desc:"Ligne dorsale jaune caractéristique. Marche plus qu'il ne saute. Chant très sonore par belle nuit d'été.",habitat:"Sablières, gravières, prairies sèches",months:[4,5,6,7,8,9]},
-  {id:114,name:"Rainette verte",latin:"Hyla arborea",type:"Amphibien",emoji:"🐸",desc:"Petite grenouille verte grimpant aux arbres grâce à ses ventouses. Son chant strident annonce la pluie.",habitat:"Roselières, haies, buissons, lisières",months:[4,5,6,7,8,9]},
-  {id:115,name:"Alyte accoucheur",latin:"Alytes obstetricans",type:"Amphibien",emoji:"🐸",desc:"Le mâle porte les œufs enroulés autour de ses pattes jusqu'à l'éclosion. Chant mélancolique nocturne.",habitat:"Talus, murets, carrières, jardins",months:[4,5,6,7,8,9]},
-  {id:116,name:"Triton ponctué",latin:"Lissotriton vulgaris",type:"Amphibien",emoji:"🦎",desc:"Le plus commun des tritons. Ventre orange tacheté, crête basse chez le mâle en phase aquatique.",habitat:"Mares, étangs, fossés, jardins",months:[3,4,5,6,7,8,9]},
-  {id:117,name:"Triton palmé",latin:"Lissotriton helveticus",type:"Amphibien",emoji:"🦎",desc:"Petites palmures aux pattes postérieures et filament caudal chez le mâle. Très commun dans les mares forestières.",habitat:"Mares, fossés, ruisseaux calmes",months:[3,4,5,6,7,8,9]},
-  {id:118,name:"Triton alpestre",latin:"Ichthyosaura alpestris",type:"Amphibien",emoji:"🦎",desc:"Ventre orange uni (sans taches). Flancs bleu ardoise chez le mâle. Préfère les eaux fraîches.",habitat:"Mares, étangs, eaux fraîches",months:[3,4,5,6,7,8,9]},
-  {id:119,name:"Triton crêté",latin:"Triturus cristatus",type:"Amphibien",emoji:"🦎",desc:"Protégé en France. Le mâle arbore une magnifique crête dentelée en période nuptiale. Peau verruqueuse.",habitat:"Mares, étangs, fossés à végétation",months:[3,4,5,6,7,8,9]},
-  {id:120,name:"Salamandre tachetée",latin:"Salamandra salamandra",type:"Amphibien",emoji:"🦎",desc:"Robe noire aux taches jaunes vif. Nocturne, sort lors des nuits de pluie d'automne. Peau légèrement toxique.",habitat:"Forêts humides, sources, ruisseaux",months:[3,4,5,6,9,10,11]},
+  {id:110,name:"Grenouille rousse",latin:"Rana temporaria",type:"Amphibien",emoji:"🐸",desc:"La plus commune des grenouilles brunes. Envahit les mares en masse dès février pour se reproduire.",habitat:"Mares, étangs, prairies humides, bois",months:[2,3,4,5,6,7,8,9]},
+  {id:111,name:"Grenouille agile",latin:"Rana dalmatina",type:"Amphibien",emoji:"🐸",desc:"Pattes postérieures très longues (record de saut). Plus forestière que la grenouille rousse.",habitat:"Forêts humides, prairies, mares",months:[3,4,5,6,7,8,9]},
+  {id:112,name:"Grenouille verte",latin:"Pelophylax kl. esculentus",type:"Amphibien",emoji:"🐸",desc:"Bruyante, présente dans tous les étangs bourguignons. Son coassement estival est incontournable.",habitat:"Étangs, mares, fossés, canaux",months:[4,5,6,7,8,9]},
+  {id:113,name:"Crapaud commun",latin:"Bufo bufo",type:"Amphibien",emoji:"🐸",desc:"Grand et verruqueux, migre massivement vers ses mares natales dès les premières pluies de mars.",habitat:"Forêts, jardins, zones humides, caves",months:[3,4,5,6,7,8,9,10]},
+  {id:114,name:"Crapaud calamite",latin:"Epidalea calamita",type:"Amphibien",emoji:"🐸",desc:"Ligne dorsale jaune caractéristique. Marche plus qu'il ne saute. Chant très sonore par belle nuit d'été.",habitat:"Sablières, gravières, prairies sèches",months:[4,5,6,7,8,9]},
+  {id:115,name:"Rainette verte",latin:"Hyla arborea",type:"Amphibien",emoji:"🐸",desc:"Petite grenouille verte grimpant aux arbres grâce à ses ventouses. Son chant strident annonce la pluie.",habitat:"Roselières, haies, buissons, lisières",months:[4,5,6,7,8,9]},
+  {id:116,name:"Alyte accoucheur",latin:"Alytes obstetricans",type:"Amphibien",emoji:"🐸",desc:"Le mâle porte les œufs enroulés autour de ses pattes jusqu'à l'éclosion. Chant mélancolique nocturne.",habitat:"Talus, murets, carrières, jardins",months:[4,5,6,7,8,9]},
+  {id:117,name:"Triton ponctué",latin:"Lissotriton vulgaris",type:"Amphibien",emoji:"🦎",desc:"Le plus commun des tritons. Ventre orange tacheté, crête basse chez le mâle en phase aquatique.",habitat:"Mares, étangs, fossés, jardins",months:[3,4,5,6,7,8,9]},
+  {id:118,name:"Triton palmé",latin:"Lissotriton helveticus",type:"Amphibien",emoji:"🦎",desc:"Petites palmures aux pattes postérieures et filament caudal chez le mâle. Très commun dans les mares forestières.",habitat:"Mares, fossés, ruisseaux calmes",months:[3,4,5,6,7,8,9]},
+  {id:119,name:"Triton alpestre",latin:"Ichthyosaura alpestris",type:"Amphibien",emoji:"🦎",desc:"Ventre orange uni (sans taches). Flancs bleu ardoise chez le mâle. Préfère les eaux fraîches.",habitat:"Mares, étangs, eaux fraîches",months:[3,4,5,6,7,8,9]},
+  {id:120,name:"Triton crêté",latin:"Triturus cristatus",type:"Amphibien",emoji:"🦎",desc:"Protégé en France. Le mâle arbore une magnifique crête dentelée en période nuptiale. Peau verruqueuse.",habitat:"Mares, étangs, fossés à végétation",months:[3,4,5,6,7,8,9]},
+  {id:121,name:"Salamandre tachetée",latin:"Salamandra salamandra",type:"Amphibien",emoji:"🦎",desc:"Robe noire aux taches jaunes vif. Nocturne, sort lors des nuits de pluie d'automne. Peau légèrement toxique.",habitat:"Forêts humides, sources, ruisseaux",months:[3,4,5,6,9,10,11]},
 ];
 
 const TYPE_CLASS = {
@@ -962,6 +963,100 @@ async function migrateIdsV4IfNeeded(){
     safeStorage.set('faune_migration_v4_done', 'true');
   } finally {
     migrationV4InProgress = false;
+  }
+}
+
+/* ───────────────────────── MIGRATION DES IDs (v5) ─────────────────────────
+   Deux changements simultanés dans la liste des espèces :
+   1) Ajout de la Genette commune, insérée après les autres mustélidés
+      (Fouine, Martre, Loutre, Putois) : tous les IDs à partir de 26 ont
+      décalé de +1.
+   2) Les 4 oiseaux ajoutés en v4 (Sittelle, Verdier, Moineau, Grimpereau)
+      sont déplacés pour être triés avec les autres passereaux "🐦" de base,
+      avant le bloc Héron/Cigogne/Rapaces/Hiboux/Canards : ce bloc décale
+      donc lui aussi de +4.
+   Cette table corrige captures, sightings ET la galerie photo, et pousse
+   les corrections vers Supabase comme la migration v4. */
+const ID_MIGRATION_MAP_V5 = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"24":24,"25":25,"26":27,"27":28,"28":29,"29":30,"30":31,"31":32,"32":33,"33":34,"34":35,"35":36,"36":37,"37":38,"38":39,"39":40,"40":41,"41":42,"42":43,"43":44,"44":45,"45":46,"46":47,"47":48,"48":49,"49":50,"50":51,"51":52,"52":53,"53":54,"54":55,"55":56,"56":57,"57":58,"58":59,"59":60,"60":61,"61":62,"62":63,"63":64,"64":65,"65":66,"66":67,"67":68,"68":69,"69":70,"70":71,"71":72,"72":73,"73":74,"74":75,"75":76,"76":81,"77":82,"78":83,"79":84,"80":85,"81":86,"82":87,"83":88,"84":89,"85":90,"86":91,"87":92,"88":93,"89":94,"90":95,"91":96,"92":97,"93":98,"94":99,"95":100,"96":101,"97":77,"98":78,"99":79,"100":80,"101":102,"102":103,"103":104,"104":105,"105":106,"106":107,"107":108,"108":109,"109":110,"110":111,"111":112,"112":113,"113":114,"114":115,"115":116,"116":117,"117":118,"118":119,"119":120,"120":121};
+
+let migrationV5InProgress = false;
+
+async function migrateIdsV5IfNeeded(){
+  const migrationDone = safeStorage.get('faune_migration_v5_done', null);
+  if(migrationDone === 'true') return;
+  if(migrationV5InProgress) return;
+  migrationV5InProgress = true;
+
+  try {
+    // Seuls les IDs réellement déplacés nécessitent un traitement (tous les
+    // autres sont des mappings identité dans la table ci-dessus).
+    const isShifted = oldId => ID_MIGRATION_MAP_V5[String(oldId)] !== Number(oldId);
+    const capturesToShift = Object.keys(captures).filter(oldId => isShifted(oldId));
+    const sightingsToShift = sightings.filter(s => isShifted(s.animalId));
+    const photosToShift = Object.keys(photosByAnimalId).filter(oldId => isShifted(oldId));
+
+    if(!capturesToShift.length && !sightingsToShift.length && !photosToShift.length){
+      safeStorage.set('faune_migration_v5_done', 'true');
+      return;
+    }
+
+    // Migrer captures (en mémoire + cache local)
+    const newCaptures = {};
+    Object.keys(captures).forEach(oldId => {
+      const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
+      newCaptures[newId] = captures[oldId];
+    });
+    captures = newCaptures;
+    save();
+
+    // Migrer sightings (en mémoire + cache local)
+    sightings.forEach(s => {
+      const newId = ID_MIGRATION_MAP_V5[String(s.animalId)];
+      if(newId) s.animalId = newId;
+    });
+    saveSightings();
+
+    // Migrer la galerie photo (en mémoire + cache local)
+    const newPhotos = {};
+    Object.keys(photosByAnimalId).forEach(oldId => {
+      const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
+      newPhotos[newId] = photosByAnimalId[oldId];
+      (newPhotos[newId] || []).forEach(p => p.animalId = newId);
+    });
+    photosByAnimalId = newPhotos;
+    savePhotosCache();
+
+    render();
+    renderMapMarkers();
+
+    // Pousse les corrections vers la base partagée pour que le décalage soit
+    // définitif et ne réapparaisse pas sur les autres appareils.
+    if(supabaseClient){
+      setSyncStatus('syncing', 'Mise à jour des identifiants…');
+      try {
+        for(const oldId of capturesToShift){
+          const newId = ID_MIGRATION_MAP_V5[oldId];
+          await pushCaptureToSupabase(newId);
+          await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId));
+        }
+        for(const s of sightingsToShift){
+          await pushSightingToSupabase(s);
+        }
+        for(const oldId of photosToShift){
+          const newId = ID_MIGRATION_MAP_V5[oldId];
+          await supabaseClient.from('photos').update({ animal_id: newId }).eq('animal_id', Number(oldId));
+        }
+        setSyncStatus('ok', 'Synchronisé');
+      } catch(e){
+        console.error('Erreur migration v5 vers Supabase:', e);
+        setSyncStatus('error', 'Erreur de synchro');
+        return;
+      }
+    }
+
+    safeStorage.set('faune_migration_v5_done', 'true');
+  } finally {
+    migrationV5InProgress = false;
   }
 }
 
@@ -1730,11 +1825,12 @@ function confirmAddSighting(id){
 
 function deleteSighting(sightingId){
   if(!requireEditMode()) return;
+  const animalId = currentAnimal?.id;
   sightings = sightings.filter(s => s.id !== sightingId);
   saveSightings();
   deleteSightingFromSupabase(sightingId);
   renderMapMarkers();
-  openModal(currentAnimal.id);
+  if(animalId != null) openModal(animalId);
 }
 
 document.querySelectorAll(".filter-btn").forEach(btn => {
@@ -2300,7 +2396,6 @@ async function loadFromSupabase(){
     setSyncStatus('ok', 'Synchronisé');
     render();
     renderMapMarkers();
-    migrateLegacyPhotosIfNeeded();
   } catch(e){
     console.error('Erreur chargement Supabase:', e);
     setSyncStatus('error', 'Erreur de connexion — données locales affichées');
@@ -2493,9 +2588,17 @@ migrateIdsV3IfNeeded();
 render();
 initMap();
 initZoneMap();
-loadFromSupabase().then(() => migrateIdsV3IfNeeded()).then(() => migrateIdsV4IfNeeded());
 loadZonesFromSupabase().then(() => migrateIdsV3IfNeeded());
-loadPhotosFromSupabase().then(() => migrateIdsV3IfNeeded()).then(() => migrateIdsV4IfNeeded());
+// Séquence stricte (l'une après l'autre, jamais en parallèle) : les captures et
+// la galerie photo doivent être chargées avant que les migrations d'IDs et la
+// migration des anciennes photos ne les modifient, pour éviter toute écriture
+// concurrente sur les mêmes données (cause du bug de photos mal placées).
+loadFromSupabase()
+  .then(() => loadPhotosFromSupabase())
+  .then(() => migrateIdsV3IfNeeded())
+  .then(() => migrateIdsV4IfNeeded())
+  .then(() => migrateIdsV5IfNeeded())
+  .then(() => migrateLegacyPhotosIfNeeded());
 </script>
 </body>
 </html>
