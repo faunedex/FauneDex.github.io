@@ -416,25 +416,31 @@
   }
   .map-count { font-size: 12px; color: var(--text-hint); margin-left: auto; }
 
-  /* SIGHTING LIST (sous la carte d'observation) */
-  .sighting-list { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
-  .sighting-row {
-    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-    border-radius: var(--radius-sm); border: 0.5px solid var(--border);
-    background: var(--surface); cursor: pointer; transition: background .15s;
+  /* MONTH MULTISELECT (filtre par mois calendaire, plusieurs sélectionnables) */
+  .month-multiselect { position: relative; }
+  .month-multiselect-btn {
+    padding: 5px 10px; border-radius: 8px; border: 0.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text); font-size: 12px; cursor: pointer;
   }
-  .sighting-row:hover { background: var(--bg); }
-  .sighting-row-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .sighting-row-dot.capture { background: #1D9E75; }
-  .sighting-row-dot.observation { background: #378ADD; }
-  .sighting-row-main { flex: 1; min-width: 0; }
-  .sighting-row-name { font-size: 13px; font-weight: 600; }
-  .sighting-row-meta { font-size: 11px; color: var(--text-muted); }
-  .sighting-row-delete {
-    border: none; background: none; color: var(--text-hint); cursor: pointer;
-    font-size: 14px; padding: 4px 6px; border-radius: 6px; flex-shrink: 0;
+  .month-multiselect-btn:hover { background: var(--bg); }
+  #month-multiselect-count { color: var(--green-dark); font-weight: 600; }
+  [data-theme="dark"] #month-multiselect-count { color: #5dcaa5; }
+  .month-multiselect-panel {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+    background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm);
+    padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.15); min-width: 160px;
+    grid-template-columns: 1fr 1fr; display: grid; gap: 4px;
   }
-  .sighting-row-delete:hover { background: #E24B4A; color: #fff; }
+  .month-multiselect-panel.open { display: grid; }
+  .month-multiselect-panel label {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text);
+    cursor: pointer; padding: 3px 4px; border-radius: 6px; white-space: nowrap;
+  }
+  .month-multiselect-panel label:hover { background: var(--bg); }
+  .month-multiselect-clear {
+    grid-column: 1 / -1; margin-top: 6px; border: none; background: none; color: var(--text-hint);
+    font-size: 11px; text-decoration: underline; cursor: pointer; padding: 4px;
+  }
 
   /* MODE ÉDITION (verrou) */
   .lock-btn {
@@ -567,11 +573,25 @@
           <option value="capture">Capture seulement</option>
           <option value="observation">Observation seulement</option>
         </select>
-        <input type="month" id="map-filter-month" aria-label="Filtrer par mois" />
-        <select id="map-sort-order" aria-label="Trier par date">
-          <option value="date_desc">Plus récent d'abord</option>
-          <option value="date_asc">Plus ancien d'abord</option>
-        </select>
+        <input type="month" id="map-filter-month" aria-label="Filtrer par mois précis" />
+        <div class="month-multiselect" id="month-multiselect">
+          <button class="month-multiselect-btn" id="month-multiselect-btn" onclick="toggleMonthMultiselect()">📅 Filtrer par mois <span id="month-multiselect-count"></span></button>
+          <div class="month-multiselect-panel" id="month-multiselect-panel">
+            <label><input type="checkbox" value="1" onchange="onMonthFilterChange()"> Janvier</label>
+            <label><input type="checkbox" value="2" onchange="onMonthFilterChange()"> Février</label>
+            <label><input type="checkbox" value="3" onchange="onMonthFilterChange()"> Mars</label>
+            <label><input type="checkbox" value="4" onchange="onMonthFilterChange()"> Avril</label>
+            <label><input type="checkbox" value="5" onchange="onMonthFilterChange()"> Mai</label>
+            <label><input type="checkbox" value="6" onchange="onMonthFilterChange()"> Juin</label>
+            <label><input type="checkbox" value="7" onchange="onMonthFilterChange()"> Juillet</label>
+            <label><input type="checkbox" value="8" onchange="onMonthFilterChange()"> Août</label>
+            <label><input type="checkbox" value="9" onchange="onMonthFilterChange()"> Septembre</label>
+            <label><input type="checkbox" value="10" onchange="onMonthFilterChange()"> Octobre</label>
+            <label><input type="checkbox" value="11" onchange="onMonthFilterChange()"> Novembre</label>
+            <label><input type="checkbox" value="12" onchange="onMonthFilterChange()"> Décembre</label>
+            <button class="month-multiselect-clear" onclick="clearMonthMultiselect()">Réinitialiser ces mois</button>
+          </div>
+        </div>
         <button class="map-filter-clear" onclick="clearMapFilters()">Réinitialiser</button>
         <span class="map-count" id="map-count"></span>
       </div>
@@ -583,7 +603,6 @@
         </div>
       </div>
       <div class="map-hint">Pour ajouter un point : ouvre une fiche animal et clique sur « 📍 Placer sur la carte ».</div>
-      <div class="sighting-list" id="sighting-list"></div>
     </div>
 
     <div class="map-subview" id="submap-zones">
@@ -2251,27 +2270,14 @@ function placePendingSightingAt(lat, lng){
 }
 
 function getMapFilters(){
+  const checkedMonths = [...document.querySelectorAll('#month-multiselect-panel input[type="checkbox"]:checked')].map(c => Number(c.value));
   return {
     type: document.getElementById('map-filter-type')?.value || 'all',
     species: document.getElementById('map-filter-species')?.value || 'all',
     kind: document.getElementById('map-filter-kind')?.value || 'all',
-    month: document.getElementById('map-filter-month')?.value || '', // format YYYY-MM
-    sort: document.getElementById('map-sort-order')?.value || 'date_desc'
+    month: document.getElementById('map-filter-month')?.value || '', // format YYYY-MM (mois précis, une seule année)
+    months: checkedMonths // mois calendaires (1-12), toutes années confondues, plusieurs possibles
   };
-}
-
-// s.date est au format DD/MM/YYYY, s.time (optionnel) au format HH:MM.
-// On reconstruit un timestamp comparable pour le tri chronologique.
-function sightingTimestamp(s){
-  const [day, month, year] = (s.date || '').split('/').map(Number);
-  if(!day || !month || !year) return 0;
-  const [h, m] = (s.time || '00:00').split(':').map(Number);
-  return new Date(year, month - 1, day, h || 0, m || 0).getTime();
-}
-
-function sortSightings(list, sortOrder){
-  const sorted = [...list].sort((a, b) => sightingTimestamp(a) - sightingTimestamp(b));
-  return sortOrder === 'date_asc' ? sorted : sorted.reverse();
 }
 
 function sightingMatchesFilters(s, f){
@@ -2285,8 +2291,41 @@ function sightingMatchesFilters(s, f){
     const [day, mo, yr] = s.date.split('/');
     if(`${yr}-${mo}` !== f.month) return false;
   }
+  if(f.months && f.months.length){
+    const mo = Number((s.date || '').split('/')[1]);
+    if(!f.months.includes(mo)) return false;
+  }
   return true;
 }
+
+/* Filtre par mois calendaire (janvier, février…), indépendant des années,
+   avec plusieurs mois sélectionnables en même temps — utile pour comparer
+   une même saison sur plusieurs années (ex: "tous les mars confondus"). */
+function toggleMonthMultiselect(){
+  document.getElementById('month-multiselect-panel')?.classList.toggle('open');
+}
+
+function onMonthFilterChange(){
+  const checked = document.querySelectorAll('#month-multiselect-panel input[type="checkbox"]:checked');
+  const countEl = document.getElementById('month-multiselect-count');
+  if(countEl) countEl.textContent = checked.length ? `(${checked.length})` : '';
+  renderMapMarkers();
+}
+
+function clearMonthMultiselect(){
+  document.querySelectorAll('#month-multiselect-panel input[type="checkbox"]').forEach(c => c.checked = false);
+  onMonthFilterChange();
+}
+
+// Ferme le menu si on clique ailleurs sur la page
+document.addEventListener('click', e => {
+  const wrapper = document.getElementById('month-multiselect');
+  if(wrapper && !wrapper.contains(e.target)){
+    document.getElementById('month-multiselect-panel')?.classList.remove('open');
+  }
+});
+
+
 
 function populateSpeciesFilter(){
   const sel = document.getElementById('map-filter-species');
@@ -2304,10 +2343,11 @@ function clearMapFilters(){
   document.getElementById('map-filter-species').value = 'all';
   document.getElementById('map-filter-kind').value = 'all';
   document.getElementById('map-filter-month').value = '';
+  clearMonthMultiselect();
   renderMapMarkers();
 }
 
-['map-filter-type','map-filter-species','map-filter-kind','map-filter-month','map-sort-order'].forEach(id => {
+['map-filter-type','map-filter-species','map-filter-kind','map-filter-month'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', renderMapMarkers);
 });
 
@@ -2320,10 +2360,8 @@ function renderMapMarkers(){
   markersLayer.clearLayers();
   markersBySightingId = {};
   let shown = 0;
-  // L'ordre de tri détermine aussi l'ordre de dessin : sur Leaflet, le
-  // dernier marqueur dessiné apparaît au-dessus en cas de points superposés.
-  const visibleSightings = sortSightings(sightings.filter(s => sightingMatchesFilters(s, f)), f.sort);
-  visibleSightings.forEach(s => {
+  sightings.forEach(s => {
+    if(!sightingMatchesFilters(s, f)) return;
     const animal = ANIMALS.find(a => a.id === s.animalId);
     if(!animal) return;
     shown++;
@@ -2343,34 +2381,9 @@ function renderMapMarkers(){
   });
   const countEl = document.getElementById('map-count');
   if(countEl) countEl.textContent = `${shown} / ${sightings.length} point${sightings.length>1?'s':''} affiché${shown>1?'s':''}`;
-  renderSightingList(visibleSightings);
 }
 
-/* Petite liste sous la carte, triée selon le même critère que les marqueurs,
-   pour parcourir/centrer/supprimer un point sans avoir à le chercher visuellement. */
-function renderSightingList(visibleSightings){
-  const container = document.getElementById('sighting-list');
-  if(!container) return;
-  if(!visibleSightings.length){
-    container.innerHTML = '';
-    return;
-  }
-  container.innerHTML = visibleSightings.map(s => {
-    const animal = ANIMALS.find(a => a.id === s.animalId);
-    if(!animal) return '';
-    return `
-      <div class="sighting-row" onclick="goToSightingOnMap('${s.id}')">
-        <span class="sighting-row-dot ${s.kind === 'capture' ? 'capture' : 'observation'}"></span>
-        <div class="sighting-row-main">
-          <div class="sighting-row-name">${animal.emoji} ${animal.name}</div>
-          <div class="sighting-row-meta">${s.kind === 'capture' ? 'Capture' : 'Observation'} — ${s.date}${s.time?` ${s.time}`:''}${s.lieu ? ' — '+s.lieu : ''}</div>
-        </div>
-        ${isEditUnlocked() ? `<button class="sighting-row-delete" title="Supprimer ce point" onclick="event.stopPropagation(); deleteSightingFromMap('${s.id}')">✕</button>` : ''}
-      </div>`;
-  }).join('');
-}
-
-/* Suppression d'un point directement depuis la carte (popup ou liste), sans
+/* Suppression d'un point directement depuis son popup sur la carte, sans
    passer par la fiche animal — contrairement à deleteSighting() qui suppose
    une modale d'animal déjà ouverte. */
 function deleteSightingFromMap(sightingId){
@@ -2521,7 +2534,7 @@ function updateLockButton(){
     btn.classList.remove('unlocked');
   }
   renderZoneMarkers(); // les popups de zones affichent ou masquent le bouton Supprimer selon le mode
-  renderMapMarkers(); // idem pour les points d'observation (bouton Supprimer + liste)
+  renderMapMarkers(); // idem pour le bouton Supprimer dans les popups de points d'observation
   updateLastExportLabel(); // visible uniquement en mode édition
   const dataTools = document.querySelector('.data-tools');
   if(dataTools) dataTools.style.display = isEditUnlocked() ? '' : 'none';
