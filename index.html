@@ -947,13 +947,17 @@ async function migrateIdsV4IfNeeded(){
   migrationV4InProgress = true;
 
   try {
-    // On ne touche qu'aux IDs réellement concernés par le décalage (97-116) ;
-    // tout ce qui est en-dessous reste identique (mapping identité dans la table).
-    const capturesToShift = Object.keys(captures).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
-    const sightingsToShift = sightings.filter(s => s.animalId >= 97 && s.animalId <= 116);
-    const photosToShift = Object.keys(photosByAnimalId).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
+    // IMPORTANT : le flag "migration faite" est stocké en local (par appareil),
+    // donc il ne suffit pas à garantir qu'une migration n'a pas déjà été
+    // appliquée par un AUTRE appareil sur la base partagée. On ne décide donc
+    // jamais de migrer un ID seulement parce que le flag local est absent :
+    // on vérifie aussi que la donnée à l'ID d'origine existe encore vraiment,
+    // et qu'elle n'a pas déjà été déplacée par ailleurs (cf. isAlreadyMigrated).
+    const oldIdsInRange = Object.keys(captures).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
+    const sightingsInRange = sightings.filter(s => s.animalId >= 97 && s.animalId <= 116);
+    const photoIdsInRange = Object.keys(photosByAnimalId).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
 
-    if(!capturesToShift.length && !sightingsToShift.length && !photosToShift.length){
+    if(!oldIdsInRange.length && !sightingsInRange.length && !photoIdsInRange.length){
       safeStorage.set('faune_migration_v4_done', 'true');
       return;
     }
@@ -962,6 +966,10 @@ async function migrateIdsV4IfNeeded(){
     const newCaptures = {};
     Object.keys(captures).forEach(oldId => {
       const newId = ID_MIGRATION_MAP_V4[oldId] || Number(oldId);
+      // Si la destination contient déjà une capture (donc cet ID a déjà été
+      // migré par un autre appareil), on garde celle déjà en place plutôt que
+      // d'écraser avec l'ancienne — ça évite tout doublon ou retour en arrière.
+      if(newCaptures[newId] && newId !== Number(oldId)) return;
       newCaptures[newId] = captures[oldId];
     });
     captures = newCaptures;
@@ -978,8 +986,12 @@ async function migrateIdsV4IfNeeded(){
     const newPhotos = {};
     Object.keys(photosByAnimalId).forEach(oldId => {
       const newId = ID_MIGRATION_MAP_V4[oldId] || Number(oldId);
-      newPhotos[newId] = photosByAnimalId[oldId];
-      (newPhotos[newId] || []).forEach(p => p.animalId = newId);
+      const existing = newPhotos[newId] || [];
+      const incoming = photosByAnimalId[oldId] || [];
+      incoming.forEach(p => p.animalId = newId);
+      // Fusionne sans dupliquer si la destination a déjà des photos (mêmes id)
+      const existingIds = new Set(existing.map(p => p.id));
+      newPhotos[newId] = existing.concat(incoming.filter(p => !existingIds.has(p.id)));
     });
     photosByAnimalId = newPhotos;
     savePhotosCache();
@@ -992,15 +1004,15 @@ async function migrateIdsV4IfNeeded(){
     if(supabaseClient){
       setSyncStatus('syncing', 'Mise à jour des identifiants…');
       try {
-        for(const oldId of capturesToShift){
+        for(const oldId of oldIdsInRange){
           const newId = ID_MIGRATION_MAP_V4[oldId];
           await pushCaptureToSupabase(newId); // écrit la fiche au nouvel ID
           await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId)); // retire l'ancienne entrée
         }
-        for(const s of sightingsToShift){
+        for(const s of sightingsInRange){
           await pushSightingToSupabase(s); // upsert sur le même id de sighting, avec le nouvel animal_id
         }
-        for(const oldId of photosToShift){
+        for(const oldId of photoIdsInRange){
           const newId = ID_MIGRATION_MAP_V4[oldId];
           await supabaseClient.from('photos').update({ animal_id: newId }).eq('animal_id', Number(oldId));
         }
@@ -1044,37 +1056,61 @@ async function migrateIdsV5IfNeeded(){
     // Seuls les IDs réellement déplacés nécessitent un traitement (tous les
     // autres sont des mappings identité dans la table ci-dessus).
     const isShifted = oldId => ID_MIGRATION_MAP_V5[String(oldId)] !== Number(oldId);
-    const capturesToShift = Object.keys(captures).filter(oldId => isShifted(oldId));
-    const sightingsToShift = sightings.filter(s => isShifted(s.animalId));
-    const photosToShift = Object.keys(photosByAnimalId).filter(oldId => isShifted(oldId));
+    const oldIdsShifted = Object.keys(captures).filter(oldId => isShifted(oldId));
+    const sightingsShifted = sightings.filter(s => isShifted(s.animalId));
+    const photoIdsShifted = Object.keys(photosByAnimalId).filter(oldId => isShifted(oldId));
 
-    if(!capturesToShift.length && !sightingsToShift.length && !photosToShift.length){
+    if(!oldIdsShifted.length && !sightingsShifted.length && !photoIdsShifted.length){
       safeStorage.set('faune_migration_v5_done', 'true');
       return;
     }
 
-    // Migrer captures (en mémoire + cache local)
+    // IMPORTANT : cette table contient des permutations qui se chevauchent
+    // (ex: 97→77 ET 76→81). Si on construisait le nouvel objet en suivant
+    // l'ordre naturel des clés, la valeur écrite à un ID de destination
+    // pourrait être écrasée juste après par une autre clé qui mappe vers ce
+    // même ID, créant exactement le bug constaté (contenu d'une fiche
+    // affichant celui d'une autre, décalée de plusieurs positions).
+    // On traite donc les déplacements dans l'ordre croissant des IDs de
+    // DESTINATION : ainsi, une case n'est jamais réécrite après avoir reçu
+    // sa valeur finale.
+    const oldIdsSortedByDestination = Object.keys(captures).sort(
+      (a, b) => (ID_MIGRATION_MAP_V5[a] || Number(a)) - (ID_MIGRATION_MAP_V5[b] || Number(b))
+    );
     const newCaptures = {};
-    Object.keys(captures).forEach(oldId => {
+    oldIdsSortedByDestination.forEach(oldId => {
       const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
+      // Si la destination contient déjà une capture (cet ID a déjà été migré
+      // par un autre appareil, ou correspond à un animal jamais déplacé), on
+      // ne l'écrase pas avec une ancienne valeur différente.
+      if(newCaptures[newId] !== undefined && newId !== Number(oldId)) return;
       newCaptures[newId] = captures[oldId];
     });
     captures = newCaptures;
     save();
 
-    // Migrer sightings (en mémoire + cache local)
+    // Migrer sightings (en mémoire + cache local) — un sighting garde son
+    // propre id unique, donc aucun risque de collision entre deux sightings ;
+    // seul son animalId change.
     sightings.forEach(s => {
       const newId = ID_MIGRATION_MAP_V5[String(s.animalId)];
       if(newId) s.animalId = newId;
     });
     saveSightings();
 
-    // Migrer la galerie photo (en mémoire + cache local)
+    // Migrer la galerie photo (en mémoire + cache local), même précaution
+    // d'ordre que pour les captures, avec fusion sans duplication.
+    const photoOldIdsSorted = Object.keys(photosByAnimalId).sort(
+      (a, b) => (ID_MIGRATION_MAP_V5[a] || Number(a)) - (ID_MIGRATION_MAP_V5[b] || Number(b))
+    );
     const newPhotos = {};
-    Object.keys(photosByAnimalId).forEach(oldId => {
+    photoOldIdsSorted.forEach(oldId => {
       const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
-      newPhotos[newId] = photosByAnimalId[oldId];
-      (newPhotos[newId] || []).forEach(p => p.animalId = newId);
+      const existing = newPhotos[newId] || [];
+      const incoming = photosByAnimalId[oldId] || [];
+      incoming.forEach(p => p.animalId = newId);
+      const existingIds = new Set(existing.map(p => p.id));
+      newPhotos[newId] = existing.concat(incoming.filter(p => !existingIds.has(p.id)));
     });
     photosByAnimalId = newPhotos;
     savePhotosCache();
@@ -1087,15 +1123,15 @@ async function migrateIdsV5IfNeeded(){
     if(supabaseClient){
       setSyncStatus('syncing', 'Mise à jour des identifiants…');
       try {
-        for(const oldId of capturesToShift){
+        for(const oldId of oldIdsShifted){
           const newId = ID_MIGRATION_MAP_V5[oldId];
           await pushCaptureToSupabase(newId);
           await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId));
         }
-        for(const s of sightingsToShift){
+        for(const s of sightingsShifted){
           await pushSightingToSupabase(s);
         }
-        for(const oldId of photosToShift){
+        for(const oldId of photoIdsShifted){
           const newId = ID_MIGRATION_MAP_V5[oldId];
           await supabaseClient.from('photos').update({ animal_id: newId }).eq('animal_id', Number(oldId));
         }
@@ -1349,6 +1385,7 @@ function openModal(id){
         ${galleryHtml}
         <button class="btn-capture" style="background:#378ADD;margin-top:10px" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
         <button class="btn-release" onclick="releaseAnimal(${id})">↩ Réinitialiser cette fiche</button>
+        <button class="btn-release" style="border-color:var(--border-strong);color:var(--text-muted)" onclick="startReassignCapture(${id})">🔧 Cette fiche correspond à un autre animal…</button>
         ${sightingsListHtml}
       </div>`
     : `<div class="capture-section">
@@ -1834,6 +1871,98 @@ function releaseAnimal(id){
   closeModal();
   render();
   renderMapMarkers();
+}
+
+/* Outil de réparation manuelle : déplace la capture, les observations et les
+   photos d'une fiche vers une autre. Sert notamment à corriger une fiche
+   dont le contenu a été mal associé suite à un décalage d'identifiants
+   (ex : la photo/notes d'un animal apparaissent sur la fiche d'un autre). */
+function startReassignCapture(fromId){
+  if(!requireEditMode()) return;
+  const fromAnimal = ANIMALS.find(a => a.id === fromId);
+  if(!fromAnimal) return;
+  const options = ANIMALS
+    .filter(a => a.id !== fromId)
+    .map(a => `<option value="${a.id}">#${String(a.id).padStart(3,'0')} ${a.emoji} ${a.name}</option>`)
+    .join('');
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-head">
+      <div>
+        <div class="modal-num">#${String(fromAnimal.id).padStart(3,'0')}</div>
+        <div class="modal-name">${fromAnimal.name}</div>
+        <div class="modal-latin">Déplacer cette fiche</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="capture-section" style="border-top:none;padding-top:0">
+      <div class="map-hint" style="text-align:left;margin-top:0;margin-bottom:10px">
+        À utiliser si la photo/les notes/les observations affichées ici correspondent en réalité à un autre animal (ex : suite à une réorganisation de la liste). Tout le contenu de cette fiche (capture, photos, points carte) sera déplacé vers l'animal choisi ci-dessous, et cette fiche sera vidée.
+      </div>
+      <select id="reassign-target" aria-label="Animal de destination" style="width:100%;margin-bottom:10px">
+        <option value="">— Choisir l'animal correct —</option>
+        ${options}
+      </select>
+      <button class="btn-capture" style="background:#C9882B" onclick="confirmReassignCapture(${fromId})">🔧 Déplacer le contenu</button>
+    </div>`;
+}
+
+async function confirmReassignCapture(fromId){
+  const select = document.getElementById('reassign-target');
+  const toId = Number(select?.value);
+  if(!toId){ showToast('⚠️ Choisis un animal de destination'); return; }
+  const toAnimal = ANIMALS.find(a => a.id === toId);
+  const fromAnimal = ANIMALS.find(a => a.id === fromId);
+  if(!toAnimal || !fromAnimal) return;
+
+  const toHasContent = !!captures[toId] || (photosByAnimalId[toId] && photosByAnimalId[toId].length);
+  const warning = toHasContent
+    ? `⚠️ La fiche "${toAnimal.name}" contient déjà des données — le contenu déplacé sera fusionné avec l'existant (rien ne sera supprimé). Continuer ?`
+    : `Déplacer toute la fiche "${fromAnimal.name}" vers "${toAnimal.name}" ?`;
+  if(!confirm(warning)) return;
+
+  setSyncStatus('syncing', 'Déplacement en cours…');
+  try {
+    // Capture : fusionne sans écraser une capture déjà présente à la destination
+    if(captures[fromId]){
+      if(!captures[toId]) captures[toId] = captures[fromId];
+      delete captures[fromId];
+      save();
+      await pushCaptureToSupabase(toId);
+      await supabaseClient.from('captures').delete().eq('animal_id', fromId);
+    }
+
+    // Sightings : changent simplement d'animalId
+    const movedSightings = sightings.filter(s => s.animalId === fromId);
+    movedSightings.forEach(s => { s.animalId = toId; });
+    if(movedSightings.length){
+      saveSightings();
+      for(const s of movedSightings) await pushSightingToSupabase(s);
+    }
+
+    // Photos : fusionne sans dupliquer (même id déjà présent = ignoré)
+    const movedPhotos = photosByAnimalId[fromId] || [];
+    if(movedPhotos.length){
+      const existing = photosByAnimalId[toId] || [];
+      const existingIds = new Set(existing.map(p => p.id));
+      movedPhotos.forEach(p => p.animalId = toId);
+      photosByAnimalId[toId] = existing.concat(movedPhotos.filter(p => !existingIds.has(p.id)));
+      delete photosByAnimalId[fromId];
+      savePhotosCache();
+      for(const p of movedPhotos.filter(p => !existingIds.has(p.id))){
+        await supabaseClient.from('photos').update({ animal_id: toId }).eq('id', p.id);
+      }
+    }
+
+    render();
+    renderMapMarkers();
+    setSyncStatus('ok', 'Synchronisé');
+    showToast(`✅ Contenu déplacé vers "${toAnimal.name}"`);
+    openModal(toId);
+  } catch(e){
+    console.error('Erreur lors du déplacement de fiche:', e);
+    setSyncStatus('error', 'Erreur de synchro');
+    showToast('⚠️ Le déplacement a rencontré une erreur — vérifie tes données');
+  }
 }
 
 function startAddSighting(id){
