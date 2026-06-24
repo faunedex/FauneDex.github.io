@@ -464,10 +464,6 @@
   .sync-dot.error { background: #E24B4A; }
   .sync-dot.syncing { background: #E8B400; animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .readonly-notice {
-    background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm);
-    padding: 8px 12px; font-size: 12px; color: var(--text-hint); margin-bottom: 10px; text-align: center;
-  }
 
   @media (max-width: 500px) {
     .app-header { padding: 0.75rem 1rem; }
@@ -1385,7 +1381,7 @@ function openModal(id){
         ${galleryHtml}
         <button class="btn-capture" style="background:#378ADD;margin-top:10px" onclick="startAddSighting(${id})">📍 Ajouter une observation (carte)</button>
         <button class="btn-release" onclick="releaseAnimal(${id})">↩ Réinitialiser cette fiche</button>
-        <button class="btn-release" style="border-color:var(--border-strong);color:var(--text-muted)" onclick="startReassignCapture(${id})">🔧 Cette fiche correspond à un autre animal…</button>
+        ${isEditUnlocked() ? `<button class="btn-release" style="border-color:var(--border-strong);color:var(--text-muted)" onclick="startReassignCapture(${id})">🔧 Cette fiche correspond à un autre animal…</button>` : ''}
         ${sightingsListHtml}
       </div>`
     : `<div class="capture-section">
@@ -2724,6 +2720,12 @@ function updateLockButton(){
   if(zonesTabBtn) zonesTabBtn.style.display = isEditUnlocked() ? '' : 'none';
   if(!isEditUnlocked() && document.getElementById('submap-zones')?.classList.contains('active')){
     switchMapSubview('observations');
+  }
+  // Si une fiche animal est ouverte, on la rafraîchit pour que les boutons
+  // réservés au mode édition (dont "Cette fiche correspond à un autre
+  // animal…") apparaissent ou disparaissent immédiatement.
+  if(currentAnimal && document.getElementById('modal-bg')?.classList.contains('open')){
+    openModal(currentAnimal.id);
   }
 }
 
