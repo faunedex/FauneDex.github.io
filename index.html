@@ -417,7 +417,7 @@
   .map-count { font-size: 12px; color: var(--text-hint); margin-left: auto; }
 
   /* MONTH MULTISELECT (filtre par mois calendaire, plusieurs sélectionnables) */
-  .month-multiselect { position: relative; }
+  .month-multiselect { position: relative; z-index: 30; }
   .month-multiselect-btn {
     padding: 5px 10px; border-radius: 8px; border: 0.5px solid var(--border-strong);
     background: var(--surface); color: var(--text); font-size: 12px; cursor: pointer;
@@ -426,7 +426,7 @@
   #month-multiselect-count { color: var(--green-dark); font-weight: 600; }
   [data-theme="dark"] #month-multiselect-count { color: #5dcaa5; }
   .month-multiselect-panel {
-    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 2000;
     background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm);
     padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.15); min-width: 160px;
     grid-template-columns: 1fr 1fr; display: grid; gap: 4px;
@@ -549,7 +549,7 @@
   <div class="view" id="view-map">
     <div class="map-subtabs">
       <button class="map-subtab active" data-submap="observations">📍 Carte d'observation</button>
-      <button class="map-subtab" data-submap="zones">🎯 Zones</button>
+      <button class="map-subtab" id="zones-subtab-btn" data-submap="zones">🎯 Zones</button>
     </div>
 
     <div class="map-subview active" id="submap-observations">
@@ -1937,6 +1937,9 @@ function switchView(viewName){
 }
 
 function switchMapSubview(subview){
+  // Les zones (coins/spots d'observation) sont réservées au mode édition,
+  // par souci de confidentialité de la localisation — voir updateLockButton().
+  if(subview === "zones" && !isEditUnlocked()) return;
   document.querySelectorAll(".map-subtab").forEach(t => t.classList.toggle("active", t.dataset.submap === subview));
   document.getElementById("submap-observations").classList.toggle("active", subview === "observations");
   document.getElementById("submap-zones").classList.toggle("active", subview === "zones");
@@ -2538,6 +2541,14 @@ function updateLockButton(){
   updateLastExportLabel(); // visible uniquement en mode édition
   const dataTools = document.querySelector('.data-tools');
   if(dataTools) dataTools.style.display = isEditUnlocked() ? '' : 'none';
+
+  // Les zones (coins/spots) restent réservées au mode édition, pour ne pas
+  // exposer ces lieux précis à n'importe quel visiteur du site.
+  const zonesTabBtn = document.getElementById('zones-subtab-btn');
+  if(zonesTabBtn) zonesTabBtn.style.display = isEditUnlocked() ? '' : 'none';
+  if(!isEditUnlocked() && document.getElementById('submap-zones')?.classList.contains('active')){
+    switchMapSubview('observations');
+  }
 }
 
 function onLockButtonClick(){
