@@ -417,7 +417,7 @@
   .map-count { font-size: 12px; color: var(--text-hint); margin-left: auto; }
 
   /* MONTH MULTISELECT (filtre par mois calendaire, plusieurs sélectionnables) */
-  .month-multiselect { position: relative; z-index: 30; }
+  .month-multiselect { position: relative; }
   .month-multiselect-btn {
     padding: 5px 10px; border-radius: 8px; border: 0.5px solid var(--border-strong);
     background: var(--surface); color: var(--text); font-size: 12px; cursor: pointer;
@@ -426,7 +426,7 @@
   #month-multiselect-count { color: var(--green-dark); font-weight: 600; }
   [data-theme="dark"] #month-multiselect-count { color: #5dcaa5; }
   .month-multiselect-panel {
-    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 2000;
+    display: none; position: fixed; z-index: 9000;
     background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm);
     padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.15); min-width: 160px;
     grid-template-columns: 1fr 1fr; gap: 4px;
@@ -2303,9 +2303,54 @@ function sightingMatchesFilters(s, f){
 
 /* Filtre par mois calendaire (janvier, février…), indépendant des années,
    avec plusieurs mois sélectionnables en même temps — utile pour comparer
-   une même saison sur plusieurs années (ex: "tous les mars confondus"). */
+   une même saison sur plusieurs années (ex: "tous les mars confondus").
+
+   Le panneau est déplacé dans <body> à l'ouverture (et repositionné en
+   `position: fixed` selon les coordonnées réelles du bouton) plutôt que
+   laissé à sa place dans .map-filters : ça évite tout risque qu'un
+   contexte d'empilement intermédiaire (créé par la carte Leaflet ou un
+   autre conteneur) ne le fasse passer derrière la carte. */
+let monthPanelOriginalParent = null;
+let monthPanelOriginalNextSibling = null;
+
 function toggleMonthMultiselect(){
-  document.getElementById('month-multiselect-panel')?.classList.toggle('open');
+  const panel = document.getElementById('month-multiselect-panel');
+  const btn = document.getElementById('month-multiselect-btn');
+  if(!panel || !btn) return;
+
+  const isOpen = panel.classList.contains('open');
+  if(isOpen){
+    closeMonthMultiselect();
+    return;
+  }
+
+  // Mémorise l'emplacement d'origine pour pouvoir l'y remettre à la fermeture
+  monthPanelOriginalParent = panel.parentNode;
+  monthPanelOriginalNextSibling = panel.nextSibling;
+
+  document.body.appendChild(panel);
+  const rect = btn.getBoundingClientRect();
+  panel.style.position = 'fixed';
+  panel.style.top = (rect.bottom + 6) + 'px';
+  panel.style.left = rect.left + 'px';
+  panel.classList.add('open');
+}
+
+function closeMonthMultiselect(){
+  const panel = document.getElementById('month-multiselect-panel');
+  if(!panel) return;
+  panel.classList.remove('open');
+  panel.style.position = '';
+  panel.style.top = '';
+  panel.style.left = '';
+  // Remet le panneau à sa place d'origine dans le HTML
+  if(monthPanelOriginalParent){
+    if(monthPanelOriginalNextSibling){
+      monthPanelOriginalParent.insertBefore(panel, monthPanelOriginalNextSibling);
+    } else {
+      monthPanelOriginalParent.appendChild(panel);
+    }
+  }
 }
 
 function onMonthFilterChange(){
@@ -2322,11 +2367,13 @@ function clearMonthMultiselect(){
 
 // Ferme le menu si on clique ailleurs sur la page
 document.addEventListener('click', e => {
-  const wrapper = document.getElementById('month-multiselect');
-  if(wrapper && !wrapper.contains(e.target)){
-    document.getElementById('month-multiselect-panel')?.classList.remove('open');
-  }
+  const panel = document.getElementById('month-multiselect-panel');
+  const btn = document.getElementById('month-multiselect-btn');
+  if(!panel || !panel.classList.contains('open')) return;
+  if(panel.contains(e.target) || btn?.contains(e.target)) return;
+  closeMonthMultiselect();
 });
+
 
 
 
