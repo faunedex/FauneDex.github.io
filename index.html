@@ -319,6 +319,7 @@
   .legend-dot.zone-orange { background: #F5A623; }
   .legend-dot.zone-red { background: #E0453E; }
   .legend-dot.zone-blue { background: #3B82C4; }
+  .legend-dot.zone-brown { background: #8B5E3C; }
 
   /* SOUS-ONGLETS CARTES */
   .map-subtabs { display: flex; gap: 6px; margin-bottom: 1rem; background: var(--bg); border-radius: 24px; padding: 4px; width: fit-content; }
@@ -617,6 +618,7 @@
           <span><span class="legend-dot zone-orange"></span>Spot intéressant</span>
           <span><span class="legend-dot zone-red"></span>Hot Spot</span>
           <span><span class="legend-dot zone-blue"></span>Zone d'affût</span>
+          <span><span class="legend-dot zone-brown"></span>Piège photo</span>
         </div>
       </div>
       <div class="map-hint">Clique sur « ➕ Ajouter une zone », choisis sa catégorie et sa taille, puis place-la sur la carte.</div>
@@ -2122,7 +2124,8 @@ const ZONE_CATEGORIES = {
   green:  { label: "Spot moyen",        color: "#4CAF50", icon: "🐾" },
   orange: { label: "Spot intéressant",  color: "#F5A623", icon: "🐾" },
   red:    { label: "Hot Spot",          color: "#E0453E", icon: "🐾" },
-  blue:   { label: "Zone d'affût",      color: "#3B82C4", icon: "🔭" }
+  blue:   { label: "Zone d'affût",      color: "#3B82C4", icon: "🔭" },
+  brown:  { label: "Piège photo",       color: "#8B5E3C", icon: "📸" }
 };
 const ZONE_SIZES = { petit: 60, moyen: 130, grand: 220 }; // rayon en mètres
 
