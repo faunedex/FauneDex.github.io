@@ -857,28 +857,11 @@ try { captures = JSON.parse(safeStorage.get('faune_cdo_v3', '{}')); } catch(e){ 
    à leur bon animal, sans rien perdre. Elle ne s'exécute qu'une fois. */
 const ID_MIGRATION_MAP = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":20,"16":22,"17":23,"18":24,"19":15,"20":25,"21":26,"22":27,"23":28,"24":29,"25":16,"26":21,"27":17,"28":18,"29":19,"30":30,"31":31,"32":32,"33":33,"34":34,"35":35,"36":36,"37":37,"38":38,"39":39,"40":40,"41":41,"42":42,"43":43,"44":44,"45":45,"46":46,"47":47,"48":48,"49":49,"50":50,"51":51,"52":52,"53":53,"54":73,"55":75,"56":76,"57":77,"58":78,"59":79,"60":80,"61":81,"62":82,"63":83,"64":84,"65":85,"66":86,"67":87,"68":88,"69":89,"70":90,"71":74,"72":54,"73":55,"74":56,"75":57,"76":58,"77":59,"78":60,"79":61,"80":62,"81":63,"82":64,"83":65,"84":91,"85":92,"86":93,"87":66,"88":67,"89":68,"90":69,"91":70,"92":71,"93":72,"94":94,"95":95,"96":96,"97":97,"98":98,"99":99,"100":100,"101":101,"102":102,"103":103,"104":104,"105":105,"106":106,"107":107,"108":108,"109":110,"110":111,"111":112,"112":113,"113":114,"114":109};
 
-function migrateIdsIfNeeded(){
-  const migrationDone = safeStorage.get('faune_migration_v2_done', null);
-  if(migrationDone === 'true') return;
-
-  // Migrer captures
-  const newCaptures = {};
-  Object.keys(captures).forEach(oldId => {
-    const newId = ID_MIGRATION_MAP[oldId];
-    if(newId) newCaptures[newId] = captures[oldId];
-  });
-  captures = newCaptures;
-  save();
-
-  // Migrer sightings (tableau, donc on mute animalId directement)
-  sightings.forEach(s => {
-    const newId = ID_MIGRATION_MAP[String(s.animalId)];
-    if(newId) s.animalId = newId;
-  });
-  saveSightings();
-
-  safeStorage.set('faune_migration_v2_done', 'true');
-}
+/* La fonction migrateIdsIfNeeded() (migration v2, la première créée) a été
+   retirée pour la même raison que les migrations v3/v4/v5 : elle se fiait à
+   un flag local par appareil et pouvait redéplacer une capture déjà à son
+   ID final correct. La table ID_MIGRATION_MAP est conservée comme registre
+   historique pour repairOrphanIdsIfNeeded(). */
 
 /* ───────────────────────── MIGRATION DES IDs (v3) ─────────────────────────
    Retrait de la Cistude d'Europe et ajout du Loup, du Lynx et du Chat
@@ -887,38 +870,16 @@ function migrateIdsIfNeeded(){
    sightings, zones ET la galerie photo, pour ne rien perdre. */
 const ID_MIGRATION_MAP_V3 = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"24":24,"25":25,"26":26,"27":27,"28":28,"29":29,"30":33,"31":34,"32":35,"33":36,"34":37,"35":38,"36":39,"37":40,"38":41,"39":42,"40":43,"41":44,"42":45,"43":46,"44":47,"45":48,"46":49,"47":50,"48":51,"49":52,"50":53,"51":54,"52":55,"53":56,"54":57,"55":58,"56":59,"57":60,"58":61,"59":62,"60":63,"61":64,"62":65,"63":66,"64":67,"65":68,"66":69,"67":70,"68":71,"69":72,"70":73,"71":74,"72":75,"73":76,"74":77,"75":78,"76":79,"77":80,"78":81,"79":82,"80":83,"81":84,"82":85,"83":86,"84":87,"85":88,"86":89,"87":90,"88":91,"89":92,"90":93,"91":94,"92":95,"93":96,"94":97,"95":98,"96":99,"97":100,"98":101,"99":102,"100":103,"101":104,"103":105,"104":106,"105":107,"106":108,"107":109,"108":110,"109":111,"110":112,"111":113,"112":114,"113":115,"114":116};
 
-function migrateIdsV3IfNeeded(){
-  const migrationDone = safeStorage.get('faune_migration_v3_done', null);
-  if(migrationDone === 'true') return;
-
-  // Migrer captures (l'ancien ID 102 = Cistude n'a pas de correspondance : sa fiche disparaît proprement)
-  const newCaptures = {};
-  Object.keys(captures).forEach(oldId => {
-    const newId = ID_MIGRATION_MAP_V3[oldId];
-    if(newId) newCaptures[newId] = captures[oldId];
-  });
-  captures = newCaptures;
-  save();
-
-  // Migrer sightings
-  sightings = sightings.filter(s => ID_MIGRATION_MAP_V3[String(s.animalId)] !== undefined);
-  sightings.forEach(s => {
-    const newId = ID_MIGRATION_MAP_V3[String(s.animalId)];
-    if(newId) s.animalId = newId;
-  });
-  saveSightings();
-
-  // Migrer la galerie photo (objet indexé par animalId)
-  const newPhotos = {};
-  Object.keys(photosByAnimalId).forEach(oldId => {
-    const newId = ID_MIGRATION_MAP_V3[oldId];
-    if(newId) newPhotos[newId] = photosByAnimalId[oldId];
-  });
-  photosByAnimalId = newPhotos;
-  savePhotosCache();
-
-  safeStorage.set('faune_migration_v3_done', 'true');
-}
+/* La fonction migrateIdsV3IfNeeded() qui existait ici a été retirée pour la
+   même raison que migrateIdsV4IfNeeded()/migrateIdsV5IfNeeded() : elle se
+   fiait à un flag local par appareil, et sur un appareil n'ayant jamais
+   ouvert le site (donc sans ce flag), elle recalculait en aveugle un
+   décalage à partir d'une table figée — ce qui pouvait redéplacer des
+   captures déjà à leur ID final correct si cet ID coïncidait avec une
+   ancienne clé de la table. C'est très probablement la cause exacte du
+   décalage répété constaté sur un PC fixe ouvrant le site pour la première
+   fois. La table ID_MIGRATION_MAP_V3 est conservée comme registre
+   historique pour repairOrphanIdsIfNeeded(). */
 
 /* ───────────────────────── MIGRATION DES IDs (v4) ─────────────────────────
    Ajout de 4 oiseaux (Sittelle torchepot, Verdier d'Europe, Moineau
@@ -931,103 +892,146 @@ function migrateIdsV3IfNeeded(){
    appareils au prochain chargement. */
 const ID_MIGRATION_MAP_V4 = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"24":24,"25":25,"26":26,"27":27,"28":28,"29":29,"30":30,"31":31,"32":32,"33":33,"34":34,"35":35,"36":36,"37":37,"38":38,"39":39,"40":40,"41":41,"42":42,"43":43,"44":44,"45":45,"46":46,"47":47,"48":48,"49":49,"50":50,"51":51,"52":52,"53":53,"54":54,"55":55,"56":56,"57":57,"58":58,"59":59,"60":60,"61":61,"62":62,"63":63,"64":64,"65":65,"66":66,"67":67,"68":68,"69":69,"70":70,"71":71,"72":72,"73":73,"74":74,"75":75,"76":76,"77":77,"78":78,"79":79,"80":80,"81":81,"82":82,"83":83,"84":84,"85":85,"86":86,"87":87,"88":88,"89":89,"90":90,"91":91,"92":92,"93":93,"94":94,"95":95,"96":96,"97":101,"98":102,"99":103,"100":104,"101":105,"102":106,"103":107,"104":108,"105":109,"106":110,"107":111,"108":112,"109":113,"110":114,"111":115,"112":116,"113":117,"114":118,"115":119,"116":120};
 
-let migrationV4InProgress = false;
+/* ───────────────────────── RÉPARATION DES IDs ORPHELINS (v6) ─────────────────────────
+   Les migrations v4 et v5 (ajout des 4 oiseaux, puis ajout de la Genette et
+   réorganisation des oiseaux) reposaient sur un flag "déjà migré" stocké en
+   local (par appareil). Problème : quand un appareil qui n'avait jamais ouvert
+   le site récemment se connectait, il ne voyait pas ce flag, recommençait la
+   migration à partir d'une table figée — et déplaçait des captures qui étaient
+   déjà à leur bon ID actuel (parce qu'un autre appareil avait déjà fait la
+   migration et synchronisé la base), juste parce que cet ID figurait dans
+   l'intervalle ou la table attendue par cette ancienne logique. C'est ce qui a
+   provoqué les décalages répétés de Mésange bleue, Pie bavarde, Sittelle
+   torchepot et Grenouille rousse.
 
-async function migrateIdsV4IfNeeded(){
-  const migrationDone = safeStorage.get('faune_migration_v4_done', null);
-  if(migrationDone === 'true') return;
-  // Garde-fou anti-concurrence : loadFromSupabase() et loadPhotosFromSupabase()
-  // se terminent à peu près en même temps et appellent chacune cette fonction.
-  // Sans ce verrou, les deux exécutions pouvaient se chevaucher et décaler
-  // certains IDs deux fois de suite (bug constaté : photos placées sur le
-  // mauvais animal après un double-décalage).
-  if(migrationV4InProgress) return;
-  migrationV4InProgress = true;
+   Cette fonction remplace v4 et v5. Son principe est différent et beaucoup
+   plus sûr : elle ne déplace JAMAIS une donnée dont l'animal_id correspond
+   déjà à un animal existant dans ANIMALS, peu importe ce qu'une ancienne
+   table de correspondance pourrait suggérer. Elle ne traite que les IDs
+   réellement orphelins (qui ne correspondent à AUCUN animal actuel), et
+   cherche leur destination via les anciennes tables comme registre
+   historique de secours. Comme le test "est-ce orphelin" se base sur l'état
+   réel des données (toujours le même, quel que soit l'appareil ou le moment),
+   cette réparation est idempotente : on peut la relancer à chaque chargement,
+   sur n'importe quel appareil, sans jamais re-décaler une donnée déjà saine. */
+function getOrphanRecoveryMaps(){
+  // Évalué à l'appel (pas au chargement du script) pour ne jamais dépendre
+  // de l'ordre de déclaration des tables plus bas dans le fichier.
+  // Ordre chronologique : v2 -> v3 -> v4 -> v5, pour suivre la chaîne
+  // complète si un très vieil ID orphelin doit traverser plusieurs époques.
+  return [ID_MIGRATION_MAP, ID_MIGRATION_MAP_V3, ID_MIGRATION_MAP_V4, ID_MIGRATION_MAP_V5];
+}
+
+function findRecoveryDestination(orphanId){
+  // Cherche, dans les anciennes tables (dans l'ordre v4 puis v5), une
+  // destination connue pour cet ID orphelin. On suit la chaîne si plusieurs
+  // tables s'appliquent en cascade (ex: id orphelin trouvé dans la table v4,
+  // puis sa destination doit encore passer par la table v5).
+  let current = orphanId;
+  for(const map of getOrphanRecoveryMaps()){
+    const next = map[String(current)];
+    if(next !== undefined && next !== current) current = next;
+  }
+  return current !== orphanId ? current : null;
+}
+
+let repairOrphanIdsInProgress = false;
+
+async function repairOrphanIdsIfNeeded(){
+  if(repairOrphanIdsInProgress) return;
+  repairOrphanIdsInProgress = true;
 
   try {
-    // IMPORTANT : le flag "migration faite" est stocké en local (par appareil),
-    // donc il ne suffit pas à garantir qu'une migration n'a pas déjà été
-    // appliquée par un AUTRE appareil sur la base partagée. On ne décide donc
-    // jamais de migrer un ID seulement parce que le flag local est absent :
-    // on vérifie aussi que la donnée à l'ID d'origine existe encore vraiment,
-    // et qu'elle n'a pas déjà été déplacée par ailleurs (cf. isAlreadyMigrated).
-    const oldIdsInRange = Object.keys(captures).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
-    const sightingsInRange = sightings.filter(s => s.animalId >= 97 && s.animalId <= 116);
-    const photoIdsInRange = Object.keys(photosByAnimalId).filter(oldId => Number(oldId) >= 97 && Number(oldId) <= 116);
+    const validIds = new Set(ANIMALS.map(a => a.id));
 
-    if(!oldIdsInRange.length && !sightingsInRange.length && !photoIdsInRange.length){
-      safeStorage.set('faune_migration_v4_done', 'true');
-      return;
+    const orphanCaptureIds = Object.keys(captures).filter(id => !validIds.has(Number(id)));
+    const orphanSightings = sightings.filter(s => !validIds.has(s.animalId));
+    const orphanPhotoIds = Object.keys(photosByAnimalId).filter(id => !validIds.has(Number(id)));
+
+    if(!orphanCaptureIds.length && !orphanSightings.length && !orphanPhotoIds.length){
+      return; // rien à réparer : tout correspond déjà à un animal existant
     }
 
-    // Migrer captures (en mémoire + cache local)
-    const newCaptures = {};
-    Object.keys(captures).forEach(oldId => {
-      const newId = ID_MIGRATION_MAP_V4[oldId] || Number(oldId);
-      // Si la destination contient déjà une capture (donc cet ID a déjà été
-      // migré par un autre appareil), on garde celle déjà en place plutôt que
-      // d'écraser avec l'ancienne — ça évite tout doublon ou retour en arrière.
-      if(newCaptures[newId] && newId !== Number(oldId)) return;
-      newCaptures[newId] = captures[oldId];
-    });
-    captures = newCaptures;
-    save();
+    let anyFixed = false;
 
-    // Migrer sightings (en mémoire + cache local)
-    sightings.forEach(s => {
-      const newId = ID_MIGRATION_MAP_V4[String(s.animalId)];
-      if(newId) s.animalId = newId;
+    // Captures orphelines
+    orphanCaptureIds.forEach(oldId => {
+      const newId = findRecoveryDestination(Number(oldId));
+      if(newId == null || !validIds.has(newId)) return; // pas de destination connue et valide : on n'invente rien
+      if(captures[newId]) return; // la destination a déjà une vraie capture : on ne l'écrase jamais
+      captures[newId] = captures[oldId];
+      delete captures[oldId];
+      anyFixed = true;
     });
-    saveSightings();
 
-    // Migrer la galerie photo (en mémoire + cache local)
-    const newPhotos = {};
-    Object.keys(photosByAnimalId).forEach(oldId => {
-      const newId = ID_MIGRATION_MAP_V4[oldId] || Number(oldId);
-      const existing = newPhotos[newId] || [];
+    // Sightings orphelins
+    orphanSightings.forEach(s => {
+      const newId = findRecoveryDestination(s.animalId);
+      if(newId != null && validIds.has(newId)){
+        s.animalId = newId;
+        anyFixed = true;
+      }
+    });
+
+    // Photos orphelines
+    orphanPhotoIds.forEach(oldId => {
+      const newId = findRecoveryDestination(Number(oldId));
+      if(newId == null || !validIds.has(newId)) return;
       const incoming = photosByAnimalId[oldId] || [];
       incoming.forEach(p => p.animalId = newId);
-      // Fusionne sans dupliquer si la destination a déjà des photos (mêmes id)
+      const existing = photosByAnimalId[newId] || [];
       const existingIds = new Set(existing.map(p => p.id));
-      newPhotos[newId] = existing.concat(incoming.filter(p => !existingIds.has(p.id)));
+      photosByAnimalId[newId] = existing.concat(incoming.filter(p => !existingIds.has(p.id)));
+      delete photosByAnimalId[oldId];
+      anyFixed = true;
     });
-    photosByAnimalId = newPhotos;
-    savePhotosCache();
 
+    if(!anyFixed) return;
+
+    save();
+    saveSightings();
+    savePhotosCache();
     render();
     renderMapMarkers();
 
-    // Pousse les corrections vers la base partagée pour que le décalage soit
-    // définitif et ne réapparaisse pas sur les autres appareils.
+    // Pousse la correction vers la base partagée pour que ça ne réapparaisse
+    // plus, peu importe l'appareil qui se connecte ensuite.
     if(supabaseClient){
-      setSyncStatus('syncing', 'Mise à jour des identifiants…');
+      setSyncStatus('syncing', 'Correction en cours…');
       try {
-        for(const oldId of oldIdsInRange){
-          const newId = ID_MIGRATION_MAP_V4[oldId];
-          await pushCaptureToSupabase(newId); // écrit la fiche au nouvel ID
-          await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId)); // retire l'ancienne entrée
+        for(const oldId of orphanCaptureIds){
+          const newId = findRecoveryDestination(Number(oldId));
+          if(newId == null || !validIds.has(newId)) continue;
+          await pushCaptureToSupabase(newId);
+          await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId));
         }
-        for(const s of sightingsInRange){
-          await pushSightingToSupabase(s); // upsert sur le même id de sighting, avec le nouvel animal_id
+        for(const s of orphanSightings){
+          if(validIds.has(s.animalId)) await pushSightingToSupabase(s);
         }
-        for(const oldId of photoIdsInRange){
-          const newId = ID_MIGRATION_MAP_V4[oldId];
+        for(const oldId of orphanPhotoIds){
+          const newId = findRecoveryDestination(Number(oldId));
+          if(newId == null || !validIds.has(newId)) continue;
           await supabaseClient.from('photos').update({ animal_id: newId }).eq('animal_id', Number(oldId));
         }
         setSyncStatus('ok', 'Synchronisé');
       } catch(e){
-        console.error('Erreur migration v4 vers Supabase:', e);
+        console.error('Erreur correction orphelins vers Supabase:', e);
         setSyncStatus('error', 'Erreur de synchro');
-        // On ne pose pas le flag : on retentera au prochain chargement avec connexion.
-        return;
       }
     }
-
-    safeStorage.set('faune_migration_v4_done', 'true');
   } finally {
-    migrationV4InProgress = false;
+    repairOrphanIdsInProgress = false;
   }
 }
+
+/* La fonction migrateIdsV4IfNeeded() qui existait ici a été retirée : elle
+   se fiait à un flag local par appareil pour décider quoi décaler, ce qui
+   provoquait des décalages répétés sur tout nouvel appareil se connectant
+   après qu'un autre ait déjà migré la base partagée. Remplacée par
+   repairOrphanIdsIfNeeded() ci-dessus, qui se base sur l'état réel des
+   données plutôt que sur un flag. La table ID_MIGRATION_MAP_V4 est
+   conservée : repairOrphanIdsIfNeeded() s'en sert comme registre de
+   correspondance pour les IDs orphelins encore liés à cette époque. */
 
 /* ───────────────────────── MIGRATION DES IDs (v5) ─────────────────────────
    Deux changements simultanés dans la liste des espèces :
@@ -1042,110 +1046,14 @@ async function migrateIdsV4IfNeeded(){
    les corrections vers Supabase comme la migration v4. */
 const ID_MIGRATION_MAP_V5 = {"1":1,"2":2,"3":3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"11":11,"12":12,"13":13,"14":14,"15":15,"16":16,"17":17,"18":18,"19":19,"20":20,"21":21,"22":22,"23":23,"24":24,"25":25,"26":27,"27":28,"28":29,"29":30,"30":31,"31":32,"32":33,"33":34,"34":35,"35":36,"36":37,"37":38,"38":39,"39":40,"40":41,"41":42,"42":43,"43":44,"44":45,"45":46,"46":47,"47":48,"48":49,"49":50,"50":51,"51":52,"52":53,"53":54,"54":55,"55":56,"56":57,"57":58,"58":59,"59":60,"60":61,"61":62,"62":63,"63":64,"64":65,"65":66,"66":67,"67":68,"68":69,"69":70,"70":71,"71":72,"72":73,"73":74,"74":75,"75":76,"76":81,"77":82,"78":83,"79":84,"80":85,"81":86,"82":87,"83":88,"84":89,"85":90,"86":91,"87":92,"88":93,"89":94,"90":95,"91":96,"92":97,"93":98,"94":99,"95":100,"96":101,"97":77,"98":78,"99":79,"100":80,"101":102,"102":103,"103":104,"104":105,"105":106,"106":107,"107":108,"108":109,"109":110,"110":111,"111":112,"112":113,"113":114,"114":115,"115":116,"116":117,"117":118,"118":119,"119":120,"120":121};
 
-let migrationV5InProgress = false;
-
-async function migrateIdsV5IfNeeded(){
-  const migrationDone = safeStorage.get('faune_migration_v5_done', null);
-  if(migrationDone === 'true') return;
-  if(migrationV5InProgress) return;
-  migrationV5InProgress = true;
-
-  try {
-    // Seuls les IDs réellement déplacés nécessitent un traitement (tous les
-    // autres sont des mappings identité dans la table ci-dessus).
-    const isShifted = oldId => ID_MIGRATION_MAP_V5[String(oldId)] !== Number(oldId);
-    const oldIdsShifted = Object.keys(captures).filter(oldId => isShifted(oldId));
-    const sightingsShifted = sightings.filter(s => isShifted(s.animalId));
-    const photoIdsShifted = Object.keys(photosByAnimalId).filter(oldId => isShifted(oldId));
-
-    if(!oldIdsShifted.length && !sightingsShifted.length && !photoIdsShifted.length){
-      safeStorage.set('faune_migration_v5_done', 'true');
-      return;
-    }
-
-    // IMPORTANT : cette table contient des permutations qui se chevauchent
-    // (ex: 97→77 ET 76→81). Si on construisait le nouvel objet en suivant
-    // l'ordre naturel des clés, la valeur écrite à un ID de destination
-    // pourrait être écrasée juste après par une autre clé qui mappe vers ce
-    // même ID, créant exactement le bug constaté (contenu d'une fiche
-    // affichant celui d'une autre, décalée de plusieurs positions).
-    // On traite donc les déplacements dans l'ordre croissant des IDs de
-    // DESTINATION : ainsi, une case n'est jamais réécrite après avoir reçu
-    // sa valeur finale.
-    const oldIdsSortedByDestination = Object.keys(captures).sort(
-      (a, b) => (ID_MIGRATION_MAP_V5[a] || Number(a)) - (ID_MIGRATION_MAP_V5[b] || Number(b))
-    );
-    const newCaptures = {};
-    oldIdsSortedByDestination.forEach(oldId => {
-      const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
-      // Si la destination contient déjà une capture (cet ID a déjà été migré
-      // par un autre appareil, ou correspond à un animal jamais déplacé), on
-      // ne l'écrase pas avec une ancienne valeur différente.
-      if(newCaptures[newId] !== undefined && newId !== Number(oldId)) return;
-      newCaptures[newId] = captures[oldId];
-    });
-    captures = newCaptures;
-    save();
-
-    // Migrer sightings (en mémoire + cache local) — un sighting garde son
-    // propre id unique, donc aucun risque de collision entre deux sightings ;
-    // seul son animalId change.
-    sightings.forEach(s => {
-      const newId = ID_MIGRATION_MAP_V5[String(s.animalId)];
-      if(newId) s.animalId = newId;
-    });
-    saveSightings();
-
-    // Migrer la galerie photo (en mémoire + cache local), même précaution
-    // d'ordre que pour les captures, avec fusion sans duplication.
-    const photoOldIdsSorted = Object.keys(photosByAnimalId).sort(
-      (a, b) => (ID_MIGRATION_MAP_V5[a] || Number(a)) - (ID_MIGRATION_MAP_V5[b] || Number(b))
-    );
-    const newPhotos = {};
-    photoOldIdsSorted.forEach(oldId => {
-      const newId = ID_MIGRATION_MAP_V5[oldId] || Number(oldId);
-      const existing = newPhotos[newId] || [];
-      const incoming = photosByAnimalId[oldId] || [];
-      incoming.forEach(p => p.animalId = newId);
-      const existingIds = new Set(existing.map(p => p.id));
-      newPhotos[newId] = existing.concat(incoming.filter(p => !existingIds.has(p.id)));
-    });
-    photosByAnimalId = newPhotos;
-    savePhotosCache();
-
-    render();
-    renderMapMarkers();
-
-    // Pousse les corrections vers la base partagée pour que le décalage soit
-    // définitif et ne réapparaisse pas sur les autres appareils.
-    if(supabaseClient){
-      setSyncStatus('syncing', 'Mise à jour des identifiants…');
-      try {
-        for(const oldId of oldIdsShifted){
-          const newId = ID_MIGRATION_MAP_V5[oldId];
-          await pushCaptureToSupabase(newId);
-          await supabaseClient.from('captures').delete().eq('animal_id', Number(oldId));
-        }
-        for(const s of sightingsShifted){
-          await pushSightingToSupabase(s);
-        }
-        for(const oldId of photoIdsShifted){
-          const newId = ID_MIGRATION_MAP_V5[oldId];
-          await supabaseClient.from('photos').update({ animal_id: newId }).eq('animal_id', Number(oldId));
-        }
-        setSyncStatus('ok', 'Synchronisé');
-      } catch(e){
-        console.error('Erreur migration v5 vers Supabase:', e);
-        setSyncStatus('error', 'Erreur de synchro');
-        return;
-      }
-    }
-
-    safeStorage.set('faune_migration_v5_done', 'true');
-  } finally {
-    migrationV5InProgress = false;
-  }
-}
+/* La fonction migrateIdsV5IfNeeded() qui existait ici a été retirée, pour
+   la même raison que migrateIdsV4IfNeeded() ci-dessus : elle se fiait à un
+   flag local par appareil, et pouvait re-décaler une donnée déjà à sa bonne
+   place sur un appareil qui n'avait jamais ouvert le site depuis. C'est ce
+   qui a provoqué les décalages répétés de Mésange bleue, Pie bavarde,
+   Sittelle torchepot et Grenouille rousse. Remplacée par
+   repairOrphanIdsIfNeeded(), qui s'appuie sur cette table comme registre
+   historique uniquement pour les IDs réellement orphelins. */
 
 // Theme
 let theme = safeStorage.get('faune_theme', 'light');
@@ -3115,27 +3023,23 @@ async function importZipBackup(file, input){
   }
 }
 
-migrateIdsIfNeeded();
 editModeUnlocked = safeStorage.get('faune_edit_unlocked', 'false') === 'true';
 updateLockButton();
 populateSeasonMonthSelect();
 updateSeasonTodayButtonVisibility();
 loadZones();
 loadPhotosCache();
-migrateIdsV3IfNeeded();
 render();
 initMap();
 initZoneMap();
-loadZonesFromSupabase().then(() => migrateIdsV3IfNeeded());
+loadZonesFromSupabase();
 // Séquence stricte (l'une après l'autre, jamais en parallèle) : les captures et
-// la galerie photo doivent être chargées avant que les migrations d'IDs et la
-// migration des anciennes photos ne les modifient, pour éviter toute écriture
-// concurrente sur les mêmes données (cause du bug de photos mal placées).
+// la galerie photo doivent être chargées avant que la réparation des IDs
+// orphelins et la migration des anciennes photos ne les modifient, pour
+// éviter toute écriture concurrente sur les mêmes données.
 loadFromSupabase()
   .then(() => loadPhotosFromSupabase())
-  .then(() => migrateIdsV3IfNeeded())
-  .then(() => migrateIdsV4IfNeeded())
-  .then(() => migrateIdsV5IfNeeded())
+  .then(() => repairOrphanIdsIfNeeded())
   .then(() => migrateLegacyPhotosIfNeeded());
 </script>
 </body>
