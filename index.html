@@ -1278,7 +1278,10 @@ function openModal(id){
 
   const capSection = cap
     ? `<div class="capture-section">
-        <div class="capture-done">✓ Capturé le ${cap.date}${cap.time?` à ${cap.time}`:''}${cap.lieu?' — '+cap.lieu:''}</div>
+        <div id="capture-date-display-${id}" style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <div class="capture-done" style="margin-bottom:0">✓ Capturé le ${cap.date}${cap.time?` à ${cap.time}`:''}${cap.lieu?' — '+cap.lieu:''}</div>
+          ${isEditUnlocked() ? `<button onclick="startEditCaptureDate(${id})" title="Modifier la date, l'heure et le lieu" style="border:none;background:none;cursor:pointer;font-size:12px;padding:2px;flex-shrink:0">✏️</button>` : ''}
+        </div>
         <div id="notes-display-${id}">
           ${cap.notes
             ? `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:10px">
@@ -1738,6 +1741,47 @@ function saveEditedNotes(id){
   pushCaptureToSupabase(id);
   openModal(id);
   showToast('✅ Note mise à jour');
+}
+
+function startEditCaptureDate(id){
+  if(!requireEditMode()) return;
+  const cap = captures[id];
+  if(!cap) return;
+  const container = document.getElementById(`capture-date-display-${id}`);
+  if(!container) return;
+  // Convertit DD/MM/YYYY → YYYY-MM-DD pour l'input[type=date]
+  const [day, mo, yr] = (cap.date || '').split('/');
+  const isoDate = (yr && mo && day) ? `${yr}-${mo.padStart(2,'0')}-${day.padStart(2,'0')}` : '';
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;margin-bottom:4px">
+      <div class="input-row" style="margin-bottom:0">
+        <input type="date" id="cap-date-edit" value="${isoDate}" aria-label="Date de capture">
+        <input type="time" id="cap-time-edit" value="${cap.time || ''}" aria-label="Heure de capture">
+      </div>
+      <input type="text" id="cap-lieu-edit" class="notes-input" value="${(cap.lieu || '').replace(/"/g, '&quot;')}" placeholder="Lieu (optionnel)" aria-label="Lieu de capture" style="margin-bottom:0">
+      <div style="display:flex;gap:8px">
+        <button class="btn-capture" style="flex:1" onclick="saveEditedCaptureDate(${id})">✓ Enregistrer</button>
+        <button class="btn-release" style="flex:1;margin-top:0" onclick="openModal(${id})">Annuler</button>
+      </div>
+    </div>`;
+  document.getElementById('cap-date-edit')?.focus();
+}
+
+function saveEditedCaptureDate(id){
+  if(!captures[id]) return;
+  const dateInput = document.getElementById('cap-date-edit');
+  const timeInput = document.getElementById('cap-time-edit');
+  const lieuInput = document.getElementById('cap-lieu-edit');
+  if(!dateInput?.value){ showToast('⚠️ La date est requise'); return; }
+  // Convertit YYYY-MM-DD → DD/MM/YYYY pour le stockage
+  const [yr, mo, day] = dateInput.value.split('-');
+  captures[id].date = `${day}/${mo}/${yr}`;
+  captures[id].time = timeInput?.value || '';
+  captures[id].lieu = lieuInput?.value || '';
+  save();
+  pushCaptureToSupabase(id);
+  openModal(id);
+  showToast('✅ Capture mise à jour');
 }
 
 function captureAnimal(id){
