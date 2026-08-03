@@ -536,7 +536,7 @@
   <div class="view" id="view-season">
     <div class="season-section">
       <div class="season-header">
-        <div class="season-title">☀️ À observer en <select id="season-month-select" aria-label="Choisir le mois"></select></div>
+        <div class="season-title">☀️ À observer en <select id="season-month-select" aria-label="Choisir le mois"></select> <span id="season-count" style="font-size:13px;color:var(--text-hint);font-weight:500;margin-left:4px"></span></div>
         <button class="season-today-btn" id="season-today-btn" onclick="resetToCurrentMonth()">Mois actuel</button>
       </div>
       <div class="season-grid" id="season-grid"></div>
@@ -1175,8 +1175,11 @@ function renderSeasonSection(){
   const container = document.getElementById('season-grid');
   if(!container) return;
   const month = getSelectedSeasonMonth();
-  // Priorité aux espèces non encore capturées, de saison ce mois-ci
-  const candidates = ANIMALS.filter(a => a.months && a.months.includes(month) && !captures[a.id]);
+  const inSeason = ANIMALS.filter(a => a.months && a.months.includes(month));
+  const captured = inSeason.filter(a => captures[a.id]);
+  const candidates = inSeason.filter(a => !captures[a.id]);
+  const countEl = document.getElementById('season-count');
+  if(countEl) countEl.textContent = `(${captured.length}/${inSeason.length})`;
   if(!candidates.length){
     container.innerHTML = '<div class="season-empty">Tu as déjà capturé toutes les espèces de saison ce mois-ci, bravo ! 🎉</div>';
     return;
