@@ -126,25 +126,51 @@
   .card {
     background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
     padding: 10px; cursor: pointer; transition: transform .2s ease, box-shadow .25s ease, border-color .2s ease;
-    position: relative; user-select: none;
+    position: relative; user-select: none; overflow: hidden;
   }
   .card:hover { transform: translateY(-3px) scale(1.02); }
 
-  /* Rareté — bordure + glow au repos, glow amplifié au survol */
+  /* Shimmer Steam : trait lumineux partant du coin supérieur droit */
+  @keyframes shimmer {
+    0%   { transform: translateX(150%) rotate(-45deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateX(-250%) rotate(-45deg); opacity: 0; }
+  }
+  .card::before {
+    content: ''; position: absolute; top: -60%; left: 0;
+    width: 40%; height: 220%; transform: translateX(150%) rotate(-45deg);
+    pointer-events: none; opacity: 0; border-radius: 2px;
+    /* couleur neutre par défaut, surchargée par rareté */
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+  }
+  .card:hover::before { animation: shimmer .9s ease forwards; }
+
+  /* Couleur du shimmer selon la rareté */
+  .card[data-rarity="common"]::before    { background: linear-gradient(90deg, transparent 0%, rgba(107,114,128,.55) 50%, transparent 100%); }
+  .card[data-rarity="uncommon"]::before  { background: linear-gradient(90deg, transparent 0%, rgba(132,204,22,.65) 50%, transparent 100%); }
+  .card[data-rarity="rare"]::before      { background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,.7) 50%, transparent 100%); }
+  .card[data-rarity="epic"]::before      { background: linear-gradient(90deg, transparent 0%, rgba(168,85,247,.75) 50%, transparent 100%); }
+  .card[data-rarity="legendary"]::before { background: linear-gradient(90deg, transparent 0%, rgba(245,158,11,.85) 50%, transparent 100%); }
+
+  /* Rareté — bordure + glow au repos, glow amplifié au survol
+     "uncommon" passe au vert-citron (#84CC16) pour se distinguer
+     clairement du vert turquoise des cartes capturées (#1D9E75) */
   .card[data-rarity="common"]    { border-color: #6B7280; box-shadow: 0 0 0 1px rgba(107,114,128,.2), 0 0 8px 1px rgba(107,114,128,.12); }
-  .card[data-rarity="uncommon"]  { border-color: #22C55E; box-shadow: 0 0 0 1px rgba(34,197,94,.3),  0 0 10px 2px rgba(34,197,94,.18); }
+  .card[data-rarity="uncommon"]  { border-color: #84CC16; box-shadow: 0 0 0 1px rgba(132,204,22,.3),  0 0 10px 2px rgba(132,204,22,.18); }
   .card[data-rarity="rare"]      { border-color: #3B82F6; box-shadow: 0 0 0 1px rgba(59,130,246,.35), 0 0 12px 2px rgba(59,130,246,.22); }
   .card[data-rarity="epic"]      { border-color: #A855F7; box-shadow: 0 0 0 1px rgba(168,85,247,.4),  0 0 14px 3px rgba(168,85,247,.28); }
   .card[data-rarity="legendary"] { border-color: #F59E0B; box-shadow: 0 0 0 1px rgba(245,158,11,.45), 0 0 16px 3px rgba(245,158,11,.32); }
 
   .card[data-rarity="common"]:hover    { box-shadow: 0 6px 20px rgba(0,0,0,.1),   0 0 0 1.5px rgba(107,114,128,.5), 0 0 18px 4px rgba(107,114,128,.28); }
-  .card[data-rarity="uncommon"]:hover  { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(34,197,94,.6),  0 0 22px 6px rgba(34,197,94,.35); }
+  .card[data-rarity="uncommon"]:hover  { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(132,204,22,.6),  0 0 22px 6px rgba(132,204,22,.35); }
   .card[data-rarity="rare"]:hover      { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(59,130,246,.65), 0 0 24px 6px rgba(59,130,246,.4); }
   .card[data-rarity="epic"]:hover      { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(168,85,247,.7),  0 0 28px 8px rgba(168,85,247,.45); }
   .card[data-rarity="legendary"]:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(245,158,11,.75), 0 0 32px 10px rgba(245,158,11,.5); }
 
+  /* Capturé : bordure turquoise (#1D9E75), clairement distincte du vert-citron uncommon */
   .card.captured {
-    border-color: var(--green);
+    border-color: #1D9E75;
     box-shadow: 0 0 0 1px rgba(29,158,117,.35), 0 0 14px 2px rgba(29,158,117,.28);
   }
   .card.captured:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1.5px rgba(29,158,117,.6), 0 0 22px 6px rgba(29,158,117,.4); }
@@ -163,7 +189,7 @@
     padding: 3px 8px; border-radius: 8px; color: #fff;
   }
   .rarity-modal-badge.common    { background: #6B7280; }
-  .rarity-modal-badge.uncommon  { background: #22C55E; }
+  .rarity-modal-badge.uncommon  { background: #84CC16; }
   .rarity-modal-badge.rare      { background: #3B82F6; }
   .rarity-modal-badge.epic      { background: #A855F7; }
   .rarity-modal-badge.legendary { background: #F59E0B; color: #1a0e00; }
@@ -568,7 +594,7 @@
     <div class="filters" id="rarity-filters" style="padding-top:0;gap:6px">
       <button class="rarity-filter-btn active" data-r="all">Toutes raretés</button>
       <button class="rarity-filter-btn" data-r="common"   style="--rc:#6B7280">⚪ Commune</button>
-      <button class="rarity-filter-btn" data-r="uncommon" style="--rc:#22C55E">🟢 Peu commune</button>
+      <button class="rarity-filter-btn" data-r="uncommon" style="--rc:#84CC16">🟢 Peu commune</button>
       <button class="rarity-filter-btn" data-r="rare"     style="--rc:#3B82F6">🔵 Rare</button>
       <button class="rarity-filter-btn" data-r="epic"     style="--rc:#A855F7">🟣 Épique</button>
       <button class="rarity-filter-btn" data-r="legendary"style="--rc:#F59E0B">🌟 Légendaire</button>
@@ -2146,7 +2172,7 @@ const ZONE_SIZES = { petit: 60, moyen: 130, grand: 220 }; // rayon en mètres
    le badge dans la fiche, et le filtre Collection. */
 const RARITY_CONFIG = {
   common:    { label: 'Commune',     color: '#6B7280', glow: 'rgba(107,114,128,.35)', star: '⚪' },
-  uncommon:  { label: 'Peu commune', color: '#22C55E', glow: 'rgba(34,197,94,.4)',   star: '🟢' },
+  uncommon:  { label: 'Peu commune', color: '#84CC16', glow: 'rgba(132,204,22,.4)',   star: '🟢' },
   rare:      { label: 'Rare',        color: '#3B82F6', glow: 'rgba(59,130,246,.45)', star: '🔵' },
   epic:      { label: 'Épique',      color: '#A855F7', glow: 'rgba(168,85,247,.5)',  star: '🟣' },
   legendary: { label: 'Légendaire',  color: '#F59E0B', glow: 'rgba(245,158,11,.55)', star: '🌟' },
