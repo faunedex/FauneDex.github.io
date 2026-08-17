@@ -217,7 +217,7 @@
 
   /* Rareté — bordure + glow au repos, glow amplifié au survol
      "uncommon" revient au vert initial (#22C55E).
-     Les cartes capturées passent au cyan (#06B6D4) — clairement distinct
+     Les cartes capturées passent au cyan (#E0453E) — clairement distinct
      de toutes les raretés, lisible immédiatement comme "je l'ai vu". */
   .card[data-rarity="common"]    { border-color: #6B7280; box-shadow: 0 0 0 1px rgba(107,114,128,.2), 0 0 8px 1px rgba(107,114,128,.12); }
   .card[data-rarity="uncommon"]  { border-color: #22C55E; box-shadow: 0 0 0 1px rgba(34,197,94,.3),  0 0 10px 2px rgba(34,197,94,.18); }
@@ -231,15 +231,15 @@
   .card[data-rarity="epic"]:hover      { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(168,85,247,.7),  0 0 28px 8px rgba(168,85,247,.45); }
   .card[data-rarity="legendary"]:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08),  0 0 0 1.5px rgba(245,158,11,.75), 0 0 32px 10px rgba(245,158,11,.5); }
 
-  /* Capturé — cyan (#06B6D4), distinct de toutes les raretés */
+  /* Capturé — cyan (#E0453E), distinct de toutes les raretés */
   .card.captured {
-    border-color: #06B6D4;
-    box-shadow: 0 0 0 1px rgba(6,182,212,.35), 0 0 14px 2px rgba(6,182,212,.28);
+    border-color: #E0453E;
+    box-shadow: 0 0 0 1px rgba(224,69,62,.35), 0 0 14px 2px rgba(224,69,62,.28);
   }
-  .card.captured:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1.5px rgba(6,182,212,.6), 0 0 22px 6px rgba(6,182,212,.4); }
-  [data-theme="light"] .card.captured { background: linear-gradient(145deg, #ecfeff 0%, #fff 70%); }
-  [data-theme="dark"]  .card.captured { background: linear-gradient(145deg, #061a1e 0%, var(--surface) 70%); }
-  [data-theme="dark"]  .card.captured { box-shadow: 0 0 0 1px rgba(6,182,212,.4), 0 0 14px 2px rgba(6,182,212,.32); }
+  .card.captured:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1.5px rgba(224,69,62,.6), 0 0 22px 6px rgba(224,69,62,.4); }
+  [data-theme="light"] .card.captured { background: linear-gradient(145deg, #fff1f0 0%, #fff 70%); }
+  [data-theme="dark"]  .card.captured { background: linear-gradient(145deg, #1e0a09 0%, var(--surface) 70%); }
+  [data-theme="dark"]  .card.captured { box-shadow: 0 0 0 1px rgba(224,69,62,.4), 0 0 14px 2px rgba(224,69,62,.32); }
   .card-num { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; letter-spacing: .5px; }
   .rarity-badge {
     position: absolute; top: 7px; right: 7px; font-size: 11px; font-weight: 700;
@@ -267,7 +267,7 @@
   .card-date { font-size: 10px; color: var(--green); margin-top: 4px; font-weight: 500; }
   .cap-dot {
     position: absolute; top: 7px; right: 26px; width: 14px; height: 14px;
-    background: #06B6D4; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: #E0453E; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   }
   .cap-dot::after { content:''; display:block; width:5px; height:5px; background:white; border-radius:50%; }
   .first-badge {
