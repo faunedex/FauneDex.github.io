@@ -47,24 +47,24 @@
   }
   .blob {
     position: absolute; border-radius: 50%;
-    filter: blur(90px); transition: opacity .3s;
+    filter: blur(70px); transition: opacity .3s;
   }
-  /* Blob vert forêt — coin supérieur gauche */
+  /* Blob vert forêt — coin supérieur gauche, plus grand et plus vif */
   .blob-green {
-    width: 600px; height: 500px;
-    top: -140px; left: -160px;
-    background: radial-gradient(ellipse at center, rgba(29,158,117,.55) 0%, rgba(15,110,86,.35) 50%, transparent 72%);
-    opacity: .7;
+    width: 900px; height: 750px;
+    top: -250px; left: -250px;
+    background: radial-gradient(ellipse at center, rgba(29,158,117,.75) 0%, rgba(15,110,86,.5) 45%, transparent 70%);
+    opacity: .9;
   }
-  /* Blob bleu nuit — coin inférieur droit */
+  /* Blob bleu nuit — coin inférieur droit, plus grand et plus vif */
   .blob-blue {
-    width: 550px; height: 450px;
-    bottom: -120px; right: -140px;
-    background: radial-gradient(ellipse at center, rgba(37,99,235,.5) 0%, rgba(30,58,110,.3) 50%, transparent 72%);
-    opacity: .6;
+    width: 850px; height: 700px;
+    bottom: -200px; right: -220px;
+    background: radial-gradient(ellipse at center, rgba(37,99,235,.7) 0%, rgba(30,58,110,.45) 45%, transparent 70%);
+    opacity: .85;
   }
-  [data-theme="dark"] .blob-green { opacity: .25; }
-  [data-theme="dark"] .blob-blue  { opacity: .2; }
+  [data-theme="dark"] .blob-green { opacity: .35; }
+  [data-theme="dark"] .blob-blue  { opacity: .3; }
 
   /* ── HEADER GLASSMORPHISME ────────────────────────────────────────────── */
   .app-header {
@@ -266,10 +266,26 @@
   .card-type { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
   .card-date { font-size: 10px; color: var(--green); margin-top: 4px; font-weight: 500; }
   .cap-dot {
-    position: absolute; top: 7px; right: 26px; width: 14px; height: 14px;
-    background: #E0453E; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 7px; right: 26px; width: 16px; height: 16px;
+    border-radius: 50%; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.4);
+    /* Pokéball : moitié haute rouge, moitié basse blanche, bande noire centrale */
+    background:
+      /* bande centrale noire */
+      linear-gradient(#1a1a1a 0%, #1a1a1a 100%) center/100% 2.5px no-repeat,
+      /* moitié haute rouge */
+      linear-gradient(#E0453E 50%, white 50%);
+    border: 1.5px solid #1a1a1a;
   }
-  .cap-dot::after { content:''; display:block; width:5px; height:5px; background:white; border-radius:50%; }
+  /* Bouton central blanc cerclé de noir */
+  .cap-dot::after {
+    content: ''; display: block;
+    width: 5px; height: 5px;
+    background: white; border-radius: 50%;
+    border: 1.5px solid #1a1a1a;
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
   .first-badge {
     position: absolute; top: 5px; right: 44px; font-size: 13px; line-height: 1;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
@@ -663,7 +679,8 @@
   <div class="view active" id="view-grid">
     <div class="filters">
       <input class="search-input" type="text" id="search" placeholder="🔍 Rechercher..." />
-      <button class="filter-btn active" data-f="all">Tous</button>
+      <button class="filter-btn" data-f="all">Tous</button>
+      <button class="filter-btn active" data-f="rarity">Rareté</button>
       <button class="filter-btn" data-f="Mammifère">Mammifères</button>
       <button class="filter-btn" data-f="Oiseau">Oiseaux</button>
       <button class="filter-btn" data-f="Reptile">Reptiles</button>
@@ -1218,7 +1235,7 @@ function toggleTheme() { applyTheme(theme === 'dark' ? 'light' : 'dark'); }
 
 let currentAnimal = null;
 let currentPhoto = null;
-let currentFilter = "all";
+let currentFilter = "rarity";
 let currentRarityFilter = "all";
 let searchText = "";
 
@@ -1342,15 +1359,24 @@ function renderSeasonSection(){
     </div>`).join('');
 }
 
+const RARITY_ORDER = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+
 function filtered(){
-  return ANIMALS.filter(a => {
-    if(currentFilter !== "all" && a.type !== currentFilter) return false;
+  const list = ANIMALS.filter(a => {
+    const f = currentFilter;
+    if(f === "rarity"){
+      // mode tri : on affiche tout, le tri est appliqué dans render()
+    } else if(f !== "all" && a.type !== f) return false;
     if(currentRarityFilter === "captured" && !captures[a.id]) return false;
     if(currentRarityFilter !== "all" && currentRarityFilter !== "captured" && a.rarity !== currentRarityFilter) return false;
     const q = searchText.toLowerCase();
     if(q && !a.name.toLowerCase().includes(q) && !a.latin.toLowerCase().includes(q)) return false;
     return true;
   });
+  if(currentFilter === "rarity"){
+    list.sort((a, b) => (RARITY_ORDER[a.rarity]||0) - (RARITY_ORDER[b.rarity]||0));
+  }
+  return list;
 }
 
 function render(){
