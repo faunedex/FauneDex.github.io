@@ -664,7 +664,6 @@
     <div class="filters">
       <input class="search-input" type="text" id="search" placeholder="🔍 Rechercher..." />
       <button class="filter-btn active" data-f="all">Tous</button>
-      <button class="filter-btn" data-f="captured">✓ Capturés</button>
       <button class="filter-btn" data-f="Mammifère">Mammifères</button>
       <button class="filter-btn" data-f="Oiseau">Oiseaux</button>
       <button class="filter-btn" data-f="Reptile">Reptiles</button>
@@ -672,6 +671,7 @@
     </div>
     <div class="filters" id="rarity-filters" style="padding-top:0;gap:6px">
       <button class="rarity-filter-btn active" data-r="all">Toutes raretés</button>
+      <button class="rarity-filter-btn" data-r="captured" style="--rc:#E0453E">🔴 Capturés</button>
       <button class="rarity-filter-btn" data-r="common"   style="--rc:#6B7280">⚪ Commune</button>
       <button class="rarity-filter-btn" data-r="uncommon" style="--rc:#22C55E">🟢 Peu commune</button>
       <button class="rarity-filter-btn" data-r="rare"     style="--rc:#3B82F6">🔵 Rare</button>
@@ -1344,9 +1344,9 @@ function renderSeasonSection(){
 
 function filtered(){
   return ANIMALS.filter(a => {
-    if(currentFilter === "captured" && !captures[a.id]) return false;
-    if(currentFilter !== "all" && currentFilter !== "captured" && a.type !== currentFilter) return false;
-    if(currentRarityFilter !== "all" && a.rarity !== currentRarityFilter) return false;
+    if(currentFilter !== "all" && a.type !== currentFilter) return false;
+    if(currentRarityFilter === "captured" && !captures[a.id]) return false;
+    if(currentRarityFilter !== "all" && currentRarityFilter !== "captured" && a.rarity !== currentRarityFilter) return false;
     const q = searchText.toLowerCase();
     if(q && !a.name.toLowerCase().includes(q) && !a.latin.toLowerCase().includes(q)) return false;
     return true;
