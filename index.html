@@ -240,11 +240,42 @@
   [data-theme="light"] .card.captured { background: linear-gradient(145deg, #fff1f0 0%, #fff 70%); }
   [data-theme="dark"]  .card.captured { background: linear-gradient(145deg, #1e0a09 0%, var(--surface) 70%); }
   [data-theme="dark"]  .card.captured { box-shadow: 0 0 0 1px rgba(224,69,62,.4), 0 0 14px 2px rgba(224,69,62,.32); }
-  .card-num { font-size: 10px; color: var(--text-hint); margin-bottom: 4px; letter-spacing: .5px; }
+  .card-num { font-size: 10px; color: var(--text-hint); margin-bottom: 2px; letter-spacing: .5px; }
   .rarity-badge {
-    position: absolute; top: 7px; right: 7px; font-size: 11px; font-weight: 700;
-    line-height: 1; opacity: .95;
+    position: absolute; top: 6px; right: 6px; font-size: 11px; font-weight: 700;
+    line-height: 1; opacity: .95; z-index: 1;
   }
+
+  /* FILTER DROPDOWNS */
+  .filter-dropdown { position: relative; }
+  .filter-dropdown-btn {
+    padding: 6px 12px; border-radius: 20px; border: 0.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text); font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; transition: all .15s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .filter-dropdown-btn:hover,
+  .filter-dropdown-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .filter-dropdown-panel {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 2000;
+    background: var(--surface); border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: 6px; min-width: 160px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.15); flex-direction: column; gap: 2px;
+  }
+  .filter-dropdown-panel.open { display: flex; }
+  .fdrop-item {
+    padding: 7px 12px; border-radius: 8px; border: none; background: none;
+    text-align: left; font-size: 12px; color: var(--text); cursor: pointer;
+    transition: background .12s; white-space: nowrap;
+  }
+  .fdrop-item:hover { background: var(--bg); }
+  .fdrop-item.active { background: var(--green); color: #fff; font-weight: 600; }
+  .fdrop-item[data-r="captured"].active,
+  .fdrop-item[data-r="common"].active,
+  .fdrop-item[data-r="uncommon"].active,
+  .fdrop-item[data-r="rare"].active,
+  .fdrop-item[data-r="epic"].active,
+  .fdrop-item[data-r="legendary"].active { background: var(--rc, var(--green)); }
 
   /* Badge dans la fiche animal (modal) */
   .rarity-modal-badge {
@@ -266,18 +297,14 @@
   .card-type { font-size: 10px; color: var(--text-hint); margin-top: 2px; }
   .card-date { font-size: 10px; color: var(--green); margin-top: 4px; font-weight: 500; }
   .cap-dot {
-    position: absolute; top: 7px; right: 26px; width: 16px; height: 16px;
+    position: absolute; top: 6px; right: 24px; width: 16px; height: 16px;
     border-radius: 50%; overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,.4);
-    /* Pokéball : moitié haute rouge, moitié basse blanche, bande noire centrale */
     background:
-      /* bande centrale noire */
       linear-gradient(#1a1a1a 0%, #1a1a1a 100%) center/100% 2.5px no-repeat,
-      /* moitié haute rouge */
       linear-gradient(#E0453E 50%, white 50%);
     border: 1.5px solid #1a1a1a;
   }
-  /* Bouton central blanc cerclé de noir */
   .cap-dot::after {
     content: ''; display: block;
     width: 5px; height: 5px;
@@ -287,7 +314,7 @@
     transform: translate(-50%, -50%);
   }
   .first-badge {
-    position: absolute; top: 5px; right: 44px; font-size: 13px; line-height: 1;
+    position: absolute; top: 4px; right: 44px; font-size: 13px; line-height: 1;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
   }
 
@@ -677,23 +704,39 @@
   </div>
 
   <div class="view active" id="view-grid">
-    <div class="filters">
+    <div class="filters" style="align-items:center">
       <input class="search-input" type="text" id="search" placeholder="🔍 Rechercher..." />
-      <button class="filter-btn" data-f="all">Tous</button>
-      <button class="filter-btn active" data-f="rarity">Rareté</button>
-      <button class="filter-btn" data-f="Mammifère">Mammifères</button>
-      <button class="filter-btn" data-f="Oiseau">Oiseaux</button>
-      <button class="filter-btn" data-f="Reptile">Reptiles</button>
-      <button class="filter-btn" data-f="Amphibien">Amphibiens</button>
-    </div>
-    <div class="filters" id="rarity-filters" style="padding-top:0;gap:6px">
-      <button class="rarity-filter-btn active" data-r="all">Toutes raretés</button>
-      <button class="rarity-filter-btn" data-r="captured" style="--rc:#E0453E">🔴 Capturés</button>
-      <button class="rarity-filter-btn" data-r="common"   style="--rc:#6B7280">⚪ Commune</button>
-      <button class="rarity-filter-btn" data-r="uncommon" style="--rc:#22C55E">🟢 Peu commune</button>
-      <button class="rarity-filter-btn" data-r="rare"     style="--rc:#3B82F6">🔵 Rare</button>
-      <button class="rarity-filter-btn" data-r="epic"     style="--rc:#A855F7">🟣 Épique</button>
-      <button class="rarity-filter-btn" data-r="legendary"style="--rc:#F59E0B">🌟 Légendaire</button>
+
+      <!-- Bouton Tri (vues) -->
+      <div class="filter-dropdown" id="tri-dropdown">
+        <button class="filter-dropdown-btn" onclick="toggleFilterDropdown('tri-dropdown')" aria-label="Tri">
+          ⇅ Tri
+        </button>
+        <div class="filter-dropdown-panel" id="tri-panel">
+          <button class="fdrop-item active" data-f="rarity">Rareté</button>
+          <button class="fdrop-item" data-f="all">Tous (#)</button>
+          <button class="fdrop-item" data-f="Mammifère">Mammifères</button>
+          <button class="fdrop-item" data-f="Oiseau">Oiseaux</button>
+          <button class="fdrop-item" data-f="Reptile">Reptiles</button>
+          <button class="fdrop-item" data-f="Amphibien">Amphibiens</button>
+        </div>
+      </div>
+
+      <!-- Bouton Filtre (rareté) -->
+      <div class="filter-dropdown" id="filtre-dropdown">
+        <button class="filter-dropdown-btn" onclick="toggleFilterDropdown('filtre-dropdown')" aria-label="Filtre" id="filtre-dropdown-btn">
+          ◈ Filtre
+        </button>
+        <div class="filter-dropdown-panel" id="filtre-panel" style="right:0;left:auto">
+          <button class="fdrop-item active" data-r="all">Toutes raretés</button>
+          <button class="fdrop-item" data-r="captured" style="--rc:#E0453E">🔴 Capturés</button>
+          <button class="fdrop-item" data-r="common"   style="--rc:#6B7280">⚪ Commune</button>
+          <button class="fdrop-item" data-r="uncommon" style="--rc:#22C55E">🟢 Peu commune</button>
+          <button class="fdrop-item" data-r="rare"     style="--rc:#3B82F6">🔵 Rare</button>
+          <button class="fdrop-item" data-r="epic"     style="--rc:#A855F7">🟣 Épique</button>
+          <button class="fdrop-item" data-r="legendary"style="--rc:#F59E0B">🌟 Légendaire</button>
+        </div>
+      </div>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -2149,20 +2192,45 @@ function deleteSighting(sightingId){
   if(animalId != null) openModal(animalId);
 }
 
-document.querySelectorAll(".filter-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active","active-cap"));
+function toggleFilterDropdown(id){
+  const panel = document.getElementById(id === 'tri-dropdown' ? 'tri-panel' : 'filtre-panel');
+  const isOpen = panel.classList.contains('open');
+  // Ferme tous les panels d'abord
+  document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+  if(!isOpen) panel.classList.add('open');
+}
+
+// Ferme les menus au clic extérieur
+document.addEventListener('click', e => {
+  if(!e.target.closest('.filter-dropdown')){
+    document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+  }
+});
+
+// Items du menu Tri
+document.querySelectorAll('#tri-panel .fdrop-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tri-panel .fdrop-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     currentFilter = btn.dataset.f;
-    btn.classList.add(currentFilter === "captured" ? "active-cap" : "active");
+    // Met le bouton Tri en vert si ≠ rareté (défaut)
+    const triBtn = document.querySelector('#tri-dropdown .filter-dropdown-btn');
+    triBtn.classList.toggle('active', currentFilter !== 'rarity');
+    document.getElementById('tri-panel').classList.remove('open');
     render();
   });
 });
 
-document.querySelectorAll(".rarity-filter-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".rarity-filter-btn").forEach(b => b.classList.remove("active"));
+// Items du menu Filtre (rareté)
+document.querySelectorAll('#filtre-panel .fdrop-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#filtre-panel .fdrop-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     currentRarityFilter = btn.dataset.r;
-    btn.classList.add("active");
+    // Met le bouton Filtre en vert si filtre actif
+    const filtreBtn = document.querySelector('#filtre-dropdown .filter-dropdown-btn');
+    filtreBtn.classList.toggle('active', currentRarityFilter !== 'all');
+    document.getElementById('filtre-panel').classList.remove('open');
     render();
   });
 });
