@@ -1850,7 +1850,19 @@ function renderGalleryWall(){
     if(!animal) return;
     (photosByAnimalId[animalId] || []).forEach(p => allPhotos.push({ ...p, animalId, animalName: animal.name, animalEmoji: animal.emoji }));
   });
-  allPhotos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  // Tri : regrouper par animal (ordre de première photo la plus récente),
+  // puis par date dans chaque groupe — les photos du même animal sont côte à côte.
+  const latestByAnimal = {};
+  allPhotos.forEach(p => {
+    if((p.createdAt || 0) > (latestByAnimal[p.animalId] || 0)){
+      latestByAnimal[p.animalId] = p.createdAt || 0;
+    }
+  });
+  allPhotos.sort((a, b) => {
+    const groupDiff = (latestByAnimal[b.animalId] || 0) - (latestByAnimal[a.animalId] || 0);
+    if(groupDiff !== 0) return groupDiff;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  });
 
   const countEl = document.getElementById('gallery-count');
   if(countEl) countEl.textContent = `${allPhotos.length} photo${allPhotos.length>1?'s':''}`;
